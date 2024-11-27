@@ -11,7 +11,7 @@ def volver_al_menu_click(e):
 def main(page: ft.Page):
     page.clean()  # Limpiar la página actual antes de agregar los elementos del menú
     page.title = "VOLTIUM"
-    page.bgcolor = colors.PINK_ACCENT_200
+    page.bgcolor = colors.PINK
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.window_width = 800  # Ancho de la ventana
