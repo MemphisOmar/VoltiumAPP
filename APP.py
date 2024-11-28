@@ -26,8 +26,8 @@ def main(page: ft.Page):
         page.window_close()
 
     jugar_button = ft.ElevatedButton(text="JUGAR", on_click=jugar_click, width=200, height=50, color=colors.LIGHT_GREEN_ACCENT_700)
-    ayuda_button = ft.ElevatedButton(text="AYUDA", on_click=ayuda_click, width=200, height=50)
-    salir_button = ft.ElevatedButton(text="SALIR", on_click=salir_click, width=200, height=50)
+    ayuda_button = ft.ElevatedButton(text="AYUDA", on_click=ayuda_click, width=200, height=50, color=colors.LIGHT_GREEN_ACCENT_700)
+    salir_button = ft.ElevatedButton(text="SALIR", on_click=salir_click, width=200, height=50, color=colors.LIGHT_GREEN_ACCENT_700)
 
     page.add(
         ft.Container(
