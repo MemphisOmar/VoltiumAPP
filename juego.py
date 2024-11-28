@@ -9,8 +9,8 @@ def configurar_ventana_juego(page: ft.Page, volver_al_menu):
     page.clean()  # Limpiar la página actual
     page.title = "Juego - VOLTIUM"
     page.bgcolor = colors.WHITE
-    page.window_width = 1024  # Ancho de la ventana del juego
-    page.window_height = 768  # Alto de la ventana del juego
+    page.window_width = 800  # Ancho de la ventana del juego
+    page.window_height = 900  # Alto de la ventana del juego
 
     # Aquí puedes agregar los elementos del juego
     game_title = ft.Text("¡Bienvenido al juego!", size=30, color=colors.BLACK)
