@@ -4,6 +4,7 @@ from flet import (
     Page,
     colors
 )
+import webbrowser
 
 def mostrar_ayuda(page: ft.Page):
     def cerrar_dialogo(e):
@@ -17,17 +18,21 @@ def mostrar_ayuda(page: ft.Page):
             actions=[
                 ft.TextButton("Cerrar", on_click=cerrar_dialogo)
             ],
-            bgcolor=colors.WHITE
+            bgcolor=colors.GREY_300
         )
         page.dialog.open = True
         page.update()
 
+    def abrir_explicacion(e):
+        webbrowser.open("https://www.youtube.com/shorts/nbPFl_Icn78")
+
     page.dialog = ft.AlertDialog(
         title=ft.Text("Ayuda del juego"),
-        content=ft.Text("Sería usted tan amable de seleccionar la ayuda que desea.", size=20),
+        content=ft.Text("Sería usted tan amable de seleccionar la ayuda que", size=20),
         actions=[
             ft.TextButton("Cerrar", on_click=cerrar_dialogo),
-            ft.TextButton("Código de Colores", on_click=mostrar_codigo_colores)
+            ft.TextButton("Código de Colores", on_click=mostrar_codigo_colores),
+            ft.TextButton("EXPLICACION", on_click=abrir_explicacion)
         ]
     )
     page.dialog.open = True
