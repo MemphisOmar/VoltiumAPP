@@ -8,7 +8,7 @@ def mostrar_ayuda(page: ft.Page):
 
     page.dialog = ft.AlertDialog(
         title=ft.Text("Ayuda del juego"),
-        content=ft.Text("Aquí puedes poner la información de ayuda."),
+        content=ft.Text("Aquí puedes poner la información de ayuda. AYUDA"),
         actions=[
             ft.TextButton("Cerrar", on_click=cerrar_dialogo)
         ]
