@@ -37,7 +37,7 @@ def main(page: ft.Page):
                     ayuda_button,
                     salir_button
                 ],
-                alignment=ft.MainAxisAlignment.LEFT,
+                alignment=ft.MainAxisAlignment.CENTER,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
             image_src="Logo_Voltium.png",  # Ruta de la imagen de fondo
