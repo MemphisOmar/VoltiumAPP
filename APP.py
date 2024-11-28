@@ -10,7 +10,7 @@ from flet import (
 def main(page: ft.Page):
     page.clean()  # Limpiar la página actual antes de agregar los elementos del menú
     page.title = "VOLTIUM"
-    page.bgcolor = colors.PINK_ACCENT_200
+    page.bgcolor = colors.WHITE
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.window_width = 800  # Ancho de la ventana
@@ -37,10 +37,10 @@ def main(page: ft.Page):
                     ayuda_button,
                     salir_button
                 ],
-                alignment=ft.MainAxisAlignment.CENTER,
+                alignment=ft.MainAxisAlignment.LEFT,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
-            image_src="OIP.jfif",  # Ruta de la imagen de fondo
+            image_src="Logo_Voltium.png",  # Ruta de la imagen de fondo
             expand=True,
             alignment=ft.alignment.top_left,
             width=800,
