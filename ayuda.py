@@ -1,10 +1,10 @@
 import flet as ft
+import webbrowser
 
 from flet import (
     Page,
     colors
 )
-import webbrowser
 
 def mostrar_ayuda(page: ft.Page):
     def cerrar_dialogo(e):
