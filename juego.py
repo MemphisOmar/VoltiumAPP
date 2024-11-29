@@ -75,7 +75,7 @@ def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego, volver_al_menu
                         alignment=ft.alignment.top_right
                     )
                 ],
-                alignment=ft.MainAxisAlignment.START,
+                alignment=ft.MainAxisAlignment.CENTER,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
             expand=True,
@@ -92,15 +92,15 @@ def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego, volver_al_menu
                     ft.Image(src="resistor_facil.png")
                 ],
                 alignment=ft.MainAxisAlignment.START,
-                horizontal_alignment=ft.CrossAxisAlignment.START,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,  # Centrar horizontalmente el contenido
             ),
-
             expand=True,
-            alignment=ft.alignment.center,
+            alignment=ft.alignment.top_center,  # Alinear el contenedor en la parte superior y centrado
             width=1024,
             height=768
         )
     )
+
 
     page.update()
 
