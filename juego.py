@@ -6,22 +6,22 @@ def configurar_ventana_juego(page: ft.Page, volver_al_menu_principal):
         volver_al_menu_principal(page)
 
     def modo_facil_click(e):
-        configurar_ventana_facil(page, configurar_ventana_juego)
+        configurar_ventana_facil(page, configurar_ventana_juego, volver_al_menu_principal)
 
     def modo_medio_click(e):
-        configurar_ventana_medio(page, configurar_ventana_juego)
+        configurar_ventana_medio(page, configurar_ventana_juego, volver_al_menu_principal)
 
     def modo_dificil_click(e):
-        configurar_ventana_dificil(page, configurar_ventana_juego)
+        configurar_ventana_dificil(page, configurar_ventana_juego, volver_al_menu_principal)
 
     page.clean()  # Limpiar la página actual
     page.title = "Juego - VOLTIUM"
-    page.bgcolor = colors.WHITE
+    page.bgcolor = "#fff1b9"
     page.window_width = 800  # Ancho de la ventana del juego
     page.window_height = 900  # Alto de la ventana del juego
 
-    #Elementos del juego
-    game_title = ft.Text("¡Bienvenido al juego!", size=30, color=colors.BLACK)
+
+    game_title = ft.Text("Selecciona el modo de juego", size=30, color=colors.BLACK)
     volver_button = ft.ElevatedButton(text="Volver al menú principal", on_click=volver_al_menu_principal_click, width=200, height=50)
     facil_button = ft.ElevatedButton(text="Modo de Juego Fácil", on_click=modo_facil_click, width=200, height=50)
     medio_button = ft.ElevatedButton(text="Modo de Juego Medio", on_click=modo_medio_click, width=200, height=50)
@@ -50,11 +50,11 @@ def configurar_ventana_juego(page: ft.Page, volver_al_menu_principal):
         )
     )
 
-    page.update()  #Actualizar pagina
+    page.update()  
 
-def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego):
+def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego, volver_al_menu_principal):
     def volver_al_menu_click(e):
-        volver_al_menu_juego(page, configurar_ventana_juego)
+        volver_al_menu_juego(page, volver_al_menu_principal)
 
     page.clean()
     page.title = "Modo de Juego Fácil"
@@ -75,7 +75,7 @@ def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego):
                         alignment=ft.alignment.top_right
                     )
                 ],
-                alignment=ft.MainAxisAlignment.CENTER,
+                alignment=ft.MainAxisAlignment.START,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
             expand=True,
@@ -85,11 +85,28 @@ def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego):
         )
     )
 
+    page.add(
+        ft.Container(
+            content=ft.Column(
+                [
+                    ft.Image(src="resistor_facil.png")
+                ],
+                alignment=ft.MainAxisAlignment.START,
+                horizontal_alignment=ft.CrossAxisAlignment.START,
+            ),
+
+            expand=True,
+            alignment=ft.alignment.center,
+            width=1024,
+            height=768
+        )
+    )
+
     page.update()
 
-def configurar_ventana_medio(page: ft.Page, volver_al_menu_juego):
+def configurar_ventana_medio(page: ft.Page, volver_al_menu_juego, volver_al_menu_principal):
     def volver_al_menu_click(e):
-        volver_al_menu_juego(page, configurar_ventana_juego)
+        volver_al_menu_juego(page, volver_al_menu_principal)
 
     page.clean()
     page.title = "Modo de Juego Medio"
@@ -120,11 +137,28 @@ def configurar_ventana_medio(page: ft.Page, volver_al_menu_juego):
         )
     )
 
+    page.add(
+        ft.Container(
+            content=ft.Column(
+                [
+                    ft.Image(src="resistor_medio.png")
+                ],
+                alignment=ft.MainAxisAlignment.START,
+                horizontal_alignment=ft.CrossAxisAlignment.START,
+            ),
+
+            expand=True,
+            alignment=ft.alignment.center,
+            width=1024,
+            height=768
+        )
+    )
+
     page.update()
 
-def configurar_ventana_dificil(page: ft.Page, volver_al_menu_juego):
+def configurar_ventana_dificil(page: ft.Page, volver_al_menu_juego, volver_al_menu_principal):
     def volver_al_menu_click(e):
-        volver_al_menu_juego(page, configurar_ventana_juego)
+        volver_al_menu_juego(page, volver_al_menu_principal)
 
     page.clean()
     page.title = "Modo de Juego Difícil"
@@ -148,8 +182,26 @@ def configurar_ventana_dificil(page: ft.Page, volver_al_menu_juego):
                 alignment=ft.MainAxisAlignment.CENTER,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
+            
             expand=True,
             alignment=ft.alignment.top_left,
+            width=1024,
+            height=768
+        )
+    )
+
+    page.add(
+        ft.Container(
+            content=ft.Column(
+                [
+                    ft.Image(src="resistor_dificil.png")
+                ],
+                alignment=ft.MainAxisAlignment.START,
+                horizontal_alignment=ft.CrossAxisAlignment.START,
+            ),
+
+            expand=True,
+            alignment=ft.alignment.center,
             width=1024,
             height=768
         )
