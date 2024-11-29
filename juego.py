@@ -1,18 +1,18 @@
 import flet as ft
 from flet import colors
 
-def configurar_ventana_juego(page: ft.Page, volver_al_menu):
-    def volver_al_menu_click(e):
-        volver_al_menu(page)
+def configurar_ventana_juego(page: ft.Page, volver_al_menu_principal):
+    def volver_al_menu_principal_click(e):
+        volver_al_menu_principal(page)
 
     def modo_facil_click(e):
-        configurar_ventana_facil(page, volver_al_menu)
+        configurar_ventana_facil(page, configurar_ventana_juego)
 
     def modo_medio_click(e):
-        configurar_ventana_medio(page, volver_al_menu)
+        configurar_ventana_medio(page, configurar_ventana_juego)
 
     def modo_dificil_click(e):
-        configurar_ventana_dificil(page, volver_al_menu)
+        configurar_ventana_dificil(page, configurar_ventana_juego)
 
     page.clean()  # Limpiar la página actual
     page.title = "Juego - VOLTIUM"
@@ -20,9 +20,9 @@ def configurar_ventana_juego(page: ft.Page, volver_al_menu):
     page.window_width = 800  # Ancho de la ventana del juego
     page.window_height = 900  # Alto de la ventana del juego
 
-    # Aquí puedes agregar los elementos del juego
+    #Elementos del juego
     game_title = ft.Text("¡Bienvenido al juego!", size=30, color=colors.BLACK)
-    volver_button = ft.ElevatedButton(text="Volver al menú", on_click=volver_al_menu_click, width=150, height=40)
+    volver_button = ft.ElevatedButton(text="Volver al menú principal", on_click=volver_al_menu_principal_click, width=200, height=50)
     facil_button = ft.ElevatedButton(text="Modo de Juego Fácil", on_click=modo_facil_click, width=200, height=50)
     medio_button = ft.ElevatedButton(text="Modo de Juego Medio", on_click=modo_medio_click, width=200, height=50)
     dificil_button = ft.ElevatedButton(text="Modo de Juego Difícil", on_click=modo_dificil_click, width=200, height=50)
@@ -50,11 +50,11 @@ def configurar_ventana_juego(page: ft.Page, volver_al_menu):
         )
     )
 
-    page.update()  # Actualizar la página para reflejar los cambios
+    page.update()  #Actualizar pagina
 
-def configurar_ventana_facil(page: ft.Page, volver_al_menu):
+def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego):
     def volver_al_menu_click(e):
-        volver_al_menu(page)
+        volver_al_menu_juego(page, configurar_ventana_juego)
 
     page.clean()
     page.title = "Modo de Juego Fácil"
@@ -63,7 +63,7 @@ def configurar_ventana_facil(page: ft.Page, volver_al_menu):
     page.window_height = 900
 
     facil_title = ft.Text("Modo de Juego Fácil", size=30, color=colors.BLACK)
-    volver_button = ft.ElevatedButton(text="Volver al menú", on_click=volver_al_menu_click, width=150, height=40)
+    volver_button = ft.ElevatedButton(text="Volver al menú de modos", on_click=volver_al_menu_click, width=200, height=50)
 
     page.add(
         ft.Container(
@@ -87,9 +87,9 @@ def configurar_ventana_facil(page: ft.Page, volver_al_menu):
 
     page.update()
 
-def configurar_ventana_medio(page: ft.Page, volver_al_menu):
+def configurar_ventana_medio(page: ft.Page, volver_al_menu_juego):
     def volver_al_menu_click(e):
-        volver_al_menu(page)
+        volver_al_menu_juego(page, configurar_ventana_juego)
 
     page.clean()
     page.title = "Modo de Juego Medio"
@@ -98,7 +98,7 @@ def configurar_ventana_medio(page: ft.Page, volver_al_menu):
     page.window_height = 900
 
     medio_title = ft.Text("Modo de Juego Medio", size=30, color=colors.BLACK)
-    volver_button = ft.ElevatedButton(text="Volver al menú", on_click=volver_al_menu_click, width=150, height=40)
+    volver_button = ft.ElevatedButton(text="Volver al menú de modos", on_click=volver_al_menu_click, width=200, height=50)
 
     page.add(
         ft.Container(
@@ -122,9 +122,9 @@ def configurar_ventana_medio(page: ft.Page, volver_al_menu):
 
     page.update()
 
-def configurar_ventana_dificil(page: ft.Page, volver_al_menu):
+def configurar_ventana_dificil(page: ft.Page, volver_al_menu_juego):
     def volver_al_menu_click(e):
-        volver_al_menu(page)
+        volver_al_menu_juego(page, configurar_ventana_juego)
 
     page.clean()
     page.title = "Modo de Juego Difícil"
@@ -133,7 +133,7 @@ def configurar_ventana_dificil(page: ft.Page, volver_al_menu):
     page.window_height = 900
 
     dificil_title = ft.Text("Modo de Juego Difícil", size=30, color=colors.BLACK)
-    volver_button = ft.ElevatedButton(text="Volver al menú", on_click=volver_al_menu_click, width=150, height=40)
+    volver_button = ft.ElevatedButton(text="Volver al menú de modos", on_click=volver_al_menu_click, width=200, height=50)
 
     page.add(
         ft.Container(
