@@ -25,15 +25,15 @@ def main(page: ft.Page):
     def salir_click(e):
         page.window_close()
 
-    jugar_button = ft.ElevatedButton(text="JUGAR", on_click=jugar_click, width=200, height=50, color=colors.LIGHT_GREEN_ACCENT_700)
-    ayuda_button = ft.ElevatedButton(text="AYUDA", on_click=ayuda_click, width=200, height=50, color=colors.LIGHT_GREEN_ACCENT_700)
-    salir_button = ft.ElevatedButton(text="SALIR", on_click=salir_click, width=200, height=50, color=colors.LIGHT_GREEN_ACCENT_700)
+    jugar_button = ft.ElevatedButton(text="JUGAR", on_click=jugar_click, width=200, height=50, color="#29c589")
+    ayuda_button = ft.ElevatedButton(text="AYUDA", on_click=ayuda_click, width=200, height=50, color="#29c589")
+    salir_button = ft.ElevatedButton(text="SALIR", on_click=salir_click, width=200, height=50, color="#29c589")
 
     page.add(
     ft.Container(
         content=ft.Column(
             [
-                ft.Image(src="Logo_Voltium_PNG.png")
+                ft.Image(src="Voltium_LOGO2.png")
             ],
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,  
