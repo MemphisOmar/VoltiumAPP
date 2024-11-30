@@ -13,8 +13,11 @@ def main(page: ft.Page):
     page.bgcolor = "#b9b3a7"
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-    page.window_width = 800  #Ancho de la ventana
-    page.window_height = 900  #Alto de la ventana
+    page.window_width = 720
+    page.window_height = 1280
+    page.window_resizable = False
+    page.padding = 0
+    page.margin = 0
 
     def jugar_click(e):
         configurar_ventana_juego(page, main)
