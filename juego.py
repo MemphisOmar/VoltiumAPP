@@ -5,6 +5,9 @@ import random
 def configurar_ventana_juego(page: ft.Page, volver_al_menu_principal):
     def volver_al_menu_principal_click(e):
         volver_al_menu_principal(page)
+    
+    def modo_principiante_click(e):
+        configurar_ventana_principiante(page, configurar_ventana_juego, volver_al_menu_principal)
 
     def modo_facil_click(e):
         configurar_ventana_facil(page, configurar_ventana_juego, volver_al_menu_principal)
@@ -27,6 +30,7 @@ def configurar_ventana_juego(page: ft.Page, volver_al_menu_principal):
 
     game_title=ft.Text("Selecciona el modo de juego", size=30, color=colors.BLACK)
     volver_button=ft.ElevatedButton(text="Volver al menú principal", on_click=volver_al_menu_principal_click, width=200, height=50)
+    principiante_button=ft.ElevatedButton(text="Modo Principiante", on_click=modo_principiante_click, width=200, height=50)
     facil_button=ft.ElevatedButton(text="Modo de Juego Fácil", on_click=modo_facil_click, width=200, height=50)
     medio_button=ft.ElevatedButton(text="Modo de Juego Medio", on_click=modo_medio_click, width=200, height=50)
     dificil_button=ft.ElevatedButton(text="Modo de Juego Difícil", on_click=modo_dificil_click, width=200, height=50)
@@ -36,6 +40,7 @@ def configurar_ventana_juego(page: ft.Page, volver_al_menu_principal):
             content=ft.Column(
                 [
                     game_title,
+                    principiante_button,
                     facil_button,
                     medio_button,
                     dificil_button,
@@ -55,6 +60,53 @@ def configurar_ventana_juego(page: ft.Page, volver_al_menu_principal):
     )
 
     page.update()  
+
+def configurar_ventana_principiante(page: ft.Page, volver_al_menu_juego, volver_al_menu_principal):
+    def volver_al_menu_click(e):
+        volver_al_menu_juego(page, volver_al_menu_principal)
+
+    numero_random=random.randrange(100, 10001, 10)
+
+    page.clean()
+    page.title = "Modo de Juego Principiante"
+    page.bgcolor = colors.WHITE
+    page.window_width = 720
+    page.window_height = 1280
+    page.window_resizable = False
+    page.padding = 0
+    page.margin = 0
+
+    principiante_title = ft.Text("Modo Principiante", size=30, color=colors.BLACK)
+    volver_button = ft.ElevatedButton(
+        text="Volver al menú de modos",
+        on_click=volver_al_menu_click,
+        width=200,
+        height=50
+    )
+
+
+    page.add(
+        ft.Container(
+            content=ft.Column(
+                [
+                    principiante_title,
+                    ft.Container(
+                        content=volver_button,
+                        alignment=ft.alignment.top_right
+                    )
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
+            expand=True,
+            alignment=ft.alignment.top_left,
+            width=1024,
+            height=768
+        )
+    )
+
+    page.update()
+
 
 def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego, volver_al_menu_principal):
     def volver_al_menu_click(e):
