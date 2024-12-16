@@ -65,7 +65,7 @@ def configurar_ventana_principiante(page: ft.Page, volver_al_menu_juego, volver_
     def volver_al_menu_click(e):
         volver_al_menu_juego(page, volver_al_menu_principal)
 
-    numero_random=random.randrange(100, 10001, 10)
+    numero_random = random.randrange(100, 10001, 10)
 
     page.clean()
     page.title = "Modo de Juego Principiante"
@@ -84,6 +84,130 @@ def configurar_ventana_principiante(page: ft.Page, volver_al_menu_juego, volver_
         height=50
     )
 
+    # Diccionario de colores con números asignados
+    colores = {
+        0: colors.BLACK,
+        1: colors.BROWN,
+        2: colors.RED,
+        3: colors.ORANGE,
+        4: colors.YELLOW,
+        5: colors.GREEN,
+        6: colors.BLUE,
+        7: colors.PURPLE,
+        8: colors.GREY,
+        9: colors.WHITE
+    }
+
+    # Seleccionar un color aleatorio
+    numero_color_aleatorio = random.choice(list(colores.keys()))
+    color_aleatorio = colores[numero_color_aleatorio]
+
+    # Pieza de dominó principal
+    domino_piece = ft.Container(
+        content=ft.Column(
+            [
+                ft.Container(
+                    bgcolor=colors.WHITE,
+                    width=50,
+                    height=50,
+                    border=ft.border.all(1, colors.BLACK)  # Borde negro alrededor del recuadro de color
+                ),
+                ft.Container(
+                    bgcolor=color_aleatorio,
+                    width=50,
+                    height=50,
+                    border=ft.border.all(1, colors.BLACK)  # Borde negro alrededor del recuadro blanco
+                )
+            ],
+            spacing=0
+        ),
+        alignment=ft.alignment.center,
+        width=50,
+        height=100,
+        border=ft.border.all(1, colors.BLACK)  # Borde negro alrededor de toda la pieza de dominó
+    )
+
+    # Función para crear una pieza de dominó adicional
+    def crear_domino():
+        numero_color_aleatorio = random.choice(list(colores.keys()))
+        color_aleatorio = colores[numero_color_aleatorio]
+        numero_aleatorio = random.randint(0, 9)
+        return ft.Draggable(
+            content=ft.Container(
+                content=ft.Column(
+                    [
+                        ft.Container(
+                            content=ft.Text(str(numero_aleatorio), size=20, color=colors.BLACK),
+                            bgcolor=colors.WHITE,
+                            width=50,
+                            height=50,
+                            border=ft.border.all(1, colors.BLACK)  # Borde negro alrededor del recuadro de color
+                        ),
+                        ft.Container(
+                            bgcolor=color_aleatorio,
+                            width=50,
+                            height=50,
+                            border=ft.border.all(1, colors.BLACK)  # Borde negro alrededor del recuadro blanco
+                        )
+                    ],
+                    spacing=0
+                ),
+                alignment=ft.alignment.center,
+                width=50,
+                height=100,
+                border=ft.border.all(1, colors.BLACK)  # Borde negro alrededor de toda la pieza de dominó
+            ),
+            data=f"{numero_aleatorio}-{list(colores.keys())[list(colores.values()).index(color_aleatorio)]}"  # Añadir datos para identificar el dominó
+        )
+
+    # Crear 3 piezas de dominó adicionales
+    dominos_adicionales = [crear_domino() for _ in range(3)]
+
+    # Contenedor para arrastrar y soltar
+    def on_accept(e):
+        # Obtener los datos del dominó arrastrado
+        data = e.data
+        if '-' in data:
+            numero, color = data.split('-')
+            color = int(color)
+            color_aleatorio = colores[color]
+            
+            # Actualizar el contenido del DragTarget con el dominó arrastrado
+            e.control.content = ft.Container(
+                content=ft.Column(
+                    [
+                        ft.Container(
+                            content=ft.Text(numero, size=20, color=colors.BLACK),
+                            bgcolor=colors.WHITE,
+                            width=50,
+                            height=50,
+                            border=ft.border.all(1, colors.BLACK)
+                        ),
+                        ft.Container(
+                            bgcolor=color_aleatorio,
+                            width=50,
+                            height=50,
+                            border=ft.border.all(1, colors.BLACK)
+                        )
+                    ],
+                    spacing=0
+                ),
+                alignment=ft.alignment.center,
+                width=50,
+                height=100,
+                border=ft.border.all(1, colors.BLACK)
+            )
+            page.update()
+
+    drag_target = ft.DragTarget(
+        content=ft.Container(
+            width=50,
+            height=100,
+            border=ft.border.all(1, colors.BLACK),
+            alignment=ft.alignment.center
+        ),
+        on_accept=on_accept
+    )
 
     page.add(
         ft.Container(
@@ -93,15 +217,34 @@ def configurar_ventana_principiante(page: ft.Page, volver_al_menu_juego, volver_
                     ft.Container(
                         content=volver_button,
                         alignment=ft.alignment.top_right
-                    )
+                    ),
+                    domino_piece,  # Añadir la pieza de dominó
+                    drag_target  # Añadir el contenedor para arrastrar y soltar
                 ],
-                alignment=ft.MainAxisAlignment.CENTER,
+                alignment=ft.MainAxisAlignment.START,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
             expand=True,
             alignment=ft.alignment.top_left,
             width=1024,
             height=768
+        )
+    )
+
+    page.add(
+        ft.Container(
+            content=ft.Column(
+                [
+                    ft.Row(dominos_adicionales, alignment=ft.MainAxisAlignment.CENTER)  # Añadir las piezas de dominó adicionales
+                ],
+                alignment=ft.MainAxisAlignment.END,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
+            expand=True,
+            alignment=ft.alignment.top_center,
+            width=1024,
+            height=768,
+            padding=ft.padding.only(bottom=100)  # Ajusta el margen inferior según sea necesario
         )
     )
 

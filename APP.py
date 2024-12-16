@@ -33,20 +33,20 @@ def main(page: ft.Page):
     salir_button = ft.ElevatedButton(text="SALIR", on_click=salir_click, width=200, height=50, color="#29c589")
 
     page.add(
-    ft.Container(
-        content=ft.Column(
-            [
-                ft.Image(src="Voltium_LOGO2.png")
-            ],
-            alignment=ft.MainAxisAlignment.CENTER,
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,  
-        ),
-        expand=True,
-        alignment=ft.alignment.top_center,  
-        width=1024,
-        height=768
+        ft.Container(
+            content=ft.Column(
+                [
+                    ft.Image(src="Voltium_LOGO2.png")
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,  
+            ),
+            expand=True,
+            alignment=ft.alignment.top_center,  
+            width=1024,
+            height=768
+        )
     )
-)
 
     page.add(
         ft.Container(
@@ -62,10 +62,9 @@ def main(page: ft.Page):
             expand=True,
             alignment=ft.alignment.bottom_center, 
             width=800,
-            height=900
+            height=900,
         )
     )
-
 
 
     page.update()  # Actualizar la página para reflejar los cambios
