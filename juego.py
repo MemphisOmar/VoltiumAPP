@@ -251,14 +251,60 @@ def configurar_ventana_principiante(page: ft.Page, volver_al_menu_juego, volver_
     page.update()
 
 
+
+
+
+def obtener_codigo_colores(resistencia):
+    colores = {
+        0: colors.BLACK,    # Negro
+        1: colors.BROWN,    # Marrón
+        2: colors.RED,      # Rojo
+        3: colors.ORANGE,   # Naranja
+        4: colors.YELLOW,   # Amarillo
+        5: colors.GREEN,    # Verde
+        6: colors.BLUE,     # Azul
+        7: colors.PURPLE,   # Violeta
+        8: colors.GREY,     # Gris
+        9: colors.WHITE     # Blanco
+    }
+    
+    resistencia_str = str(resistencia)
+    
+    if len(resistencia_str) <= 3:
+        primera_banda = int(resistencia_str[0]) if len(resistencia_str) >= 1 else 0
+        segunda_banda = int(resistencia_str[1]) if len(resistencia_str) >= 2 else 0
+        multiplicador = len(resistencia_str) - 2 if len(resistencia_str) > 2 else 0
+        
+        return [
+            colores[primera_banda],   # Color para primera banda
+            colores[segunda_banda],   # Color para segunda banda
+            colores[multiplicador]    # Color para multiplicador
+        ]
+    
+    else:
+        primera_banda = int(resistencia_str[0])
+        segunda_banda = int(resistencia_str[1])
+        multiplicador = len(resistencia_str) - 3
+        
+        return [
+            colores[primera_banda],   # Color para primera banda
+            colores[segunda_banda],   # Color para segunda banda
+            colores[multiplicador]    # Color para multiplicador
+        ]
+
+
+
+
 def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego, volver_al_menu_principal):
     def volver_al_menu_click(e):
         volver_al_menu_juego(page, volver_al_menu_principal)
 
-    resistencias_comerciales = [10, 22, 330, 100, 220, 470, 1000, 2200, 4700, 10000]
+    resistencias_comerciales = [10, 22, 330, 100, 220, 470, 1000, 2200, 4700, 10_000]
 
 
     numero_random=random.choice(resistencias_comerciales)
+
+    codigo_colores = obtener_codigo_colores(numero_random)
 
     page.clean()
     page.title = "Modo de Juego Facil"
@@ -277,32 +323,29 @@ def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego, volver_al_menu
         height=50
     )
 
-    #Contenedores
+
     receptor1 = ft.Container(
-        content=ft.Text("Receptor 1"),
         width=100,
         height=100,
-        bgcolor=colors.GREY_200,
+        bgcolor=codigo_colores[0],  # Primer color
         alignment=ft.alignment.center,
         border_radius=ft.border_radius.all(10),  
         padding=ft.padding.all(10)  
     )
 
     receptor2 = ft.Container(
-        content=ft.Text("Receptor 2"),
         width=100,
         height=100,
-        bgcolor=colors.GREY_200,
+        bgcolor=codigo_colores[1],  # Segundo color
         alignment=ft.alignment.center,
         border_radius=ft.border_radius.all(10), 
         padding=ft.padding.all(10)  
     )
 
     receptor3 = ft.Container(
-        content=ft.Text("Receptor 3"),
         width=100,
         height=100,
-        bgcolor=colors.GREY_200,
+        bgcolor=codigo_colores[2],  # Color del multiplicador
         alignment=ft.alignment.center,
         border_radius=ft.border_radius.all(10),  
         padding=ft.padding.all(10)  
