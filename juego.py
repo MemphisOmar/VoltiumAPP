@@ -255,7 +255,10 @@ def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego, volver_al_menu
     def volver_al_menu_click(e):
         volver_al_menu_juego(page, volver_al_menu_principal)
 
-    numero_random=random.randrange(100, 10001, 10)
+    resistencias_comerciales = [10, 22, 330, 100, 220, 470, 1000, 2200, 4700, 10000]
+
+
+    numero_random=random.choice(resistencias_comerciales)
 
     page.clean()
     page.title = "Modo de Juego Facil"
