@@ -1,25 +1,16 @@
 import flet as ft
 from flet import colors
+from juegoPrincipiante import configurar_ventana_domino #Importar la subrutina desde juego.py
 import random
-import subprocess
-import sys
-import os
+
 
 def configurar_ventana_juego(page: ft.Page, volver_al_menu_principal):
     def volver_al_menu_principal_click(e):
         volver_al_menu_principal(page)
     
     def modo_principiante_click(e):
-        # Get the path to juegoPrincipiante.py
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        principiante_path = os.path.join(script_dir, "juegoPrincipiante.py")
-        
-        # Launch juegoPrincipiante.py as a separate process
-        subprocess.Popen([sys.executable, principiante_path])
-        
-        # Close current window
-        e.page.window_destroy()
-
+        configurar_ventana_domino(page, volver_al_menu_principal)
+ 
     def modo_facil_click(e):
         configurar_ventana_facil(page, configurar_ventana_juego, volver_al_menu_principal)
 
@@ -110,9 +101,6 @@ def obtener_codigo_colores(resistencia):
             colores[segunda_banda],   # Color para segunda banda
             colores[multiplicador]    # Color para multiplicador
         ]
-
-
-
 
 def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego, volver_al_menu_principal):
     

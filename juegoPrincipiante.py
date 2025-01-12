@@ -1,229 +1,133 @@
 import flet as ft
+from ayuda import mostrar_ayuda
 import random
+from flet import (
+    colors
+)
 
-class Solitaire:
-    def __init__(self):
-        self.start_top = 0
-        self.start_left = 0
-        self.slot_occupied = False
-        self.current_slot_top = 110
+class FichaDomino:
+    def __init__(self, identificador, numero1, numero2):
+        self.identificador = identificador
+        self.numero1 = numero1
+        self.numero2 = numero2
 
-def main(page: ft.Page):
-    page.bgcolor = ft.colors.WHITE
+    def __str__(self):
+        return f"Ficha {self.identificador}: [{self.numero1}|{self.numero2}]"
 
-    # Global declarations
-    global main_color_index
-    global draggable_dominos
-    global placed_dominos
+def crear_fichas_domino():
+    """
+    Crea las 55 fichas del dominó cubano (del 0 al 9)
+    Retorna una lista ordenada de objetos FichaDomino
+    """
+    fichas = []
+    identificador_ficha = 1
+    # Crear todas las combinaciones posibles del 0 al 9
+    for i in range(10):  # 0 al 9
+        for j in range(i, 10):  # desde i hasta 9
+            fichas.append(FichaDomino(identificador_ficha, i, j))
+            identificador_ficha += 1
+    return fichas
 
-    # Initialize globals
-    main_color_index = random.randint(0, 9)
-    draggable_dominos = []
-    placed_dominos = []
+def crear_ficha_visual(numero1, numero2):
+    return ft.Container(
+        content=ft.Column(
+            controls=[
+                ft.Container(
+                    content=ft.Text(str(numero1), size=24, color=colors.BLACK),
+                    alignment=ft.alignment.center,
+                    bgcolor=colors.WHITE,
+                    width=60,
+                    height=60,
+                    border=ft.border.all(1, colors.BLACK)
+                ),
+                ft.Container(
+                    content=ft.Text(str(numero2), size=24, color=colors.BLACK),
+                    alignment=ft.alignment.center,
+                    bgcolor=colors.WHITE,
+                    width=60,
+                    height=60,
+                    border=ft.border.all(1, colors.BLACK)
+                )
+            ],
+            spacing=1,
+        ),
+        bgcolor=colors.BLACK,
+        padding=1,
+        border_radius=5
+    )
 
+def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
+    def volver_al_menu_principal_click(e):
+        volver_al_menu_principal(page)
 
-
+    page.clean()
+    page.title = "DOMINO - Principiante"
+    page.bgcolor = "#b9b3a7"
+    page.vertical_alignment = ft.MainAxisAlignment.CENTER
+    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.window_width = 720
     page.window_height = 1280
+    page.window_resizable = False
+    page.padding = 0
+    page.margin = 0
+
+    # Título de la página
+    titulo = ft.Text("Modo Principiante", size=30, color=colors.BLACK)
+    volver_button=ft.ElevatedButton(text="Volver al menú principal", on_click=volver_al_menu_principal_click, width=200, height=50)
     
-    colores = {
-        0: ft.colors.BLACK,
-        1: ft.colors.BROWN,
-        2: ft.colors.RED,
-        3: ft.colors.ORANGE,
-        4: ft.colors.YELLOW,
-        5: ft.colors.GREEN,
-        6: ft.colors.BLUE,
-        7: ft.colors.PURPLE,
-        8: ft.colors.GREY,
-        9: ft.colors.WHITE
-    }
-
-    def generate_new_game_state():
-        new_color_index = random.randint(0, 9)
-        # Solo incluir el número que coincide con el nuevo color principal
-        new_numbers = [new_color_index]
-        for _ in range(2):
-            new_numbers.append(random.randint(0, 9))
-        random.shuffle(new_numbers)
-        
-        new_dominos = []
-        for i in range(3):
-            random_color = colores[random.randint(0, 9)]
-            new_domino = ft.GestureDetector(
-                mouse_cursor=ft.MouseCursor.MOVE,
-                drag_interval=5,
-                on_pan_start=start_drag,
-                on_pan_update=drag,
-                on_pan_end=drop,
-                left=50 + i * 100,
-                top=400,
-                content=ft.Column(
-                    controls=[
-                        ft.Container(
-                            content=ft.Text(str(new_numbers[i]), size=20, color=ft.colors.BLACK),
-                            width=50,
-                            height=50,
-                            alignment=ft.alignment.center,
-                            bgcolor=ft.colors.WHITE,
-                            border=ft.border.all(1, ft.colors.BLACK)
-                        ),
-                        ft.Container(
-                            width=50,
-                            height=50,
-                            bgcolor=random_color,
-                            border=ft.border.all(1, ft.colors.BLACK)
-                        )
-                    ],
-                    spacing=0
-                )
-            )
-            new_dominos.append(new_domino)
-        return new_dominos, new_color_index
-
-    def add_new_slot():
-        solitaire.current_slot_top += 110
-        new_slot = ft.Container(
-            width=50,
-            height=100,
-            top=solitaire.current_slot_top,
-            left=200,
-            border=ft.border.all(1, ft.colors.BLACK)
-        )
-        return new_slot
-
-    def place(card, slot):
-        global main_color_index, draggable_dominos, placed_dominos
-        dragged_number = int(card.content.controls[0].content.value)
-        if not solitaire.slot_occupied and dragged_number == main_color_index:
-            card.top = slot.top
-            card.left = slot.left
-            solitaire.slot_occupied = True
-            
-            # Add current domino to placed list
-            placed_dominos.append(card)
-
-            # Remove only unplaced draggable dominos
-            for domino in draggable_dominos:
-                if domino not in placed_dominos:
-                    page.controls[0].controls.remove(domino)
-
-            # Add new slot
-            new_slot = add_new_slot()
-            page.controls[0].controls.append(new_slot)
-
-            # Generate and add new dominos
-            new_dominos, new_main_color_index = generate_new_game_state()
-            main_color_index = new_main_color_index
-            page.controls[0].controls.extend(new_dominos)
-            draggable_dominos = new_dominos
-            
-            solitaire.slot_occupied = False
-            page.update()
-        else:
-            bounce_back(solitaire, card)
-
-    def bounce_back(game, card):
-        card.top = game.start_top
-        card.left = game.start_left
-
-    def start_drag(e: ft.DragStartEvent):
-        solitaire.start_top = e.control.top
-        solitaire.start_left = e.control.left
-
-    def drag(e: ft.DragUpdateEvent):
-        e.control.top = max(0, e.control.top + e.delta_y)
-        e.control.left = max(0, e.control.left + e.delta_x)
-        e.control.update()
-    
-    def drop(e: ft.DragEndEvent):
-        if (
-            abs(e.control.top - slot.top) < 20
-            and abs(e.control.left - slot.left) < 20
-        ):
-            place(e.control, slot)
-        else:
-            bounce_back(solitaire, e.control)
-        e.control.update()
-
-    # Main domino at top
-    main_domino = ft.Column(
-        controls=[
-            ft.Container(
-                content=ft.Text(str(random.randint(0, 9)), size=20, color=ft.colors.BLACK),
-                width=50,
-                height=50,
-                alignment=ft.alignment.center,
-                bgcolor=ft.colors.WHITE,
-                border=ft.border.all(1, ft.colors.BLACK)
-            ),
-            ft.Container(
-                width=50,
-                height=50,
-                bgcolor=colores[main_color_index],
-                border=ft.border.all(1, ft.colors.BLACK)
-            )
-        ],
-        spacing=0,
-        top=0,
-        left=200
+    # Botón para volver al menú
+    volver_button = ft.ElevatedButton(
+        text="Volver al menú",
+        on_click=volver_al_menu_principal_click,
+        width=200,
+        height=50
     )
 
-    # Initial slot
-    slot = ft.Container(
-        width=50,
-        height=100,
-        top=110,
-        left=200,
-        border=ft.border.all(1, ft.colors.BLACK)
+    # Crear la base de fichas ordenada
+    base_fichas = crear_fichas_domino()
+    
+    # Ejemplo de cómo acceder a las fichas:
+    # for ficha in base_fichas:
+    #     print(ficha)  # Mostrará: Ficha 1: [0|0], Ficha 2: [0|1], etc.
+
+    # Crear grid de fichas
+    grid = ft.GridView(
+        expand=True,
+        runs_count=5,
+        max_extent=150,
+        child_aspect_ratio=0.5,
+        spacing=10,
+        run_spacing=10,
     )
 
-    # Initial draggable dominos
-    numbers = [main_color_index]
-    for _ in range(2):
-        numbers.append(random.randint(0, 9))
-    random.shuffle(numbers)
+    # Agregar fichas visuales al grid
+    for ficha in base_fichas:
+        grid.controls.append(crear_ficha_visual(ficha.numero1, ficha.numero2))
 
-    for i in range(3):
-        random_color = colores[random.randint(0, 9)]
-        domino = ft.GestureDetector(
-            mouse_cursor=ft.MouseCursor.MOVE,
-            drag_interval=5,
-            on_pan_start=start_drag,
-            on_pan_update=drag,
-            on_pan_end=drop,
-            left=50 + i * 100,
-            top=400,
+    # Modificar el contenedor principal para incluir el grid de fichas
+    page.add(
+        ft.Container(
             content=ft.Column(
-                controls=[
+                [
+                    titulo,
                     ft.Container(
-                        content=ft.Text(str(numbers[i]), size=20, color=ft.colors.BLACK),
-                        width=50,
-                        height=50,
-                        alignment=ft.alignment.center,
-                        bgcolor=ft.colors.WHITE,
-                        border=ft.border.all(1, ft.colors.BLACK)
+                        content=grid,
+                        padding=20,
+                        expand=True
                     ),
                     ft.Container(
-                        width=50,
-                        height=50,
-                        bgcolor=random_color,
-                        border=ft.border.all(1, ft.colors.BLACK)
+                        content=volver_button,
+                        alignment=ft.alignment.bottom_right
                     )
                 ],
-                spacing=0
-            )
-        )
-        draggable_dominos.append(domino)
-
-    solitaire = Solitaire()
-
-    page.add(
-        ft.Stack(
-            controls=[main_domino, slot] + draggable_dominos,
-            width=1000,
-            height=500
+                alignment=ft.MainAxisAlignment.START,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
+            expand=True,
+            alignment=ft.alignment.top_center,
+            width=1024,
+            height=768
         )
     )
 
-ft.app(target=main)
+    page.update()
