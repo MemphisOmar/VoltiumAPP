@@ -1,4 +1,10 @@
 import flet as ft
+import os
+import sys
+
+# Asegurar que el directorio actual está en el path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from ayuda import mostrar_ayuda  #Importar la subrutina desde ayuda.py
 from juego import configurar_ventana_juego  #Importar la subrutina desde juego.py
 
@@ -69,6 +75,7 @@ def main(page: ft.Page):
 
     page.update()  # Actualizar la página para reflejar los cambios
 
-ft.app(target=main)
+if __name__ == "__main__":
+    ft.app(target=main)
 
 

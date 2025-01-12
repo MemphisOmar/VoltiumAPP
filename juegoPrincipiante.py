@@ -14,6 +14,9 @@ class FichaDomino:
     def __str__(self):
         return f"Ficha {self.identificador}: [{self.numero1}|{self.numero2}]"
 
+# Variable global para mantener las fichas disponibles
+fichas_disponibles = []
+
 def crear_fichas_domino():
     """
     Crea las 55 fichas del dominó cubano (del 0 al 9)
@@ -27,6 +30,44 @@ def crear_fichas_domino():
             fichas.append(FichaDomino(identificador_ficha, i, j))
             identificador_ficha += 1
     return fichas
+
+def seleccionar_ficha_aleatoria():
+    """
+    Selecciona una ficha aleatoria de las disponibles y la remueve de la lista
+    """
+    global fichas_disponibles
+    if not fichas_disponibles:
+        fichas_disponibles = crear_fichas_domino()
+    ficha = random.choice(fichas_disponibles)
+    fichas_disponibles.remove(ficha)
+    return ficha
+
+def repartir_fichas():
+    """
+    Reparte las fichas entre jugador, aplicación y pozo
+    """
+    global fichas_disponibles
+    if not fichas_disponibles:
+        fichas_disponibles = crear_fichas_domino()
+    
+    # Repartir 15 fichas para el jugador
+    fichas_jugador = []
+    for _ in range(15):
+        ficha = random.choice(fichas_disponibles)
+        fichas_jugador.append(ficha)
+        fichas_disponibles.remove(ficha)
+    
+    # Repartir 15 fichas para la aplicación
+    fichas_app = []
+    for _ in range(15):
+        ficha = random.choice(fichas_disponibles)
+        fichas_app.append(ficha)
+        fichas_disponibles.remove(ficha)
+    
+    # Las fichas restantes serán el pozo
+    pozo = fichas_disponibles.copy()
+    
+    return fichas_jugador, fichas_app, pozo
 
 def crear_ficha_visual(numero1, numero2):
     return ft.Container(
@@ -56,6 +97,36 @@ def crear_ficha_visual(numero1, numero2):
         border_radius=5
     )
 
+def crear_fichas_jugador_row(fichas):
+    """Crea una fila de fichas visibles para el jugador"""
+    return ft.Row(
+        controls=[crear_ficha_visual(f.numero1, f.numero2) for f in fichas],
+        scroll=ft.ScrollMode.AUTO,
+        alignment=ft.MainAxisAlignment.CENTER,
+    )
+
+def crear_fichas_app_row(cantidad):
+    """Crea una fila de fichas ocultas para la aplicación"""
+    ficha_oculta = ft.Container(
+        width=60,
+        height=120,
+        bgcolor=colors.BROWN,
+        border_radius=5
+    )
+    return ft.Row(
+        controls=[ficha_oculta for _ in range(cantidad)],
+        scroll=ft.ScrollMode.AUTO,
+        alignment=ft.MainAxisAlignment.CENTER,
+    )
+
+def crear_pozo_column(fichas):
+    """Crea una columna de fichas visibles para el pozo"""
+    return ft.Column(
+        controls=[crear_ficha_visual(f.numero1, f.numero2) for f in fichas],
+        scroll=ft.ScrollMode.AUTO,
+        spacing=5,
+    )
+
 def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
     def volver_al_menu_principal_click(e):
         volver_al_menu_principal(page)
@@ -73,9 +144,6 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
 
     # Título de la página
     titulo = ft.Text("Modo Principiante", size=30, color=colors.BLACK)
-    volver_button=ft.ElevatedButton(text="Volver al menú principal", on_click=volver_al_menu_principal_click, width=200, height=50)
-    
-    # Botón para volver al menú
     volver_button = ft.ElevatedButton(
         text="Volver al menú",
         on_click=volver_al_menu_principal_click,
@@ -83,50 +151,52 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         height=50
     )
 
-    # Crear la base de fichas ordenada
-    base_fichas = crear_fichas_domino()
+    # Repartir fichas
+    ficha_central = seleccionar_ficha_aleatoria()
+    fichas_jugador, fichas_app, pozo = repartir_fichas()
     
-    # Ejemplo de cómo acceder a las fichas:
-    # for ficha in base_fichas:
-    #     print(ficha)  # Mostrará: Ficha 1: [0|0], Ficha 2: [0|1], etc.
+    # Crear las vistas de las fichas
+    fichas_jugador_view = crear_fichas_jugador_row(fichas_jugador)
+    fichas_app_view = crear_fichas_app_row(len(fichas_app))
+    pozo_view = crear_pozo_column(pozo)
 
-    # Crear grid de fichas
-    grid = ft.GridView(
-        expand=True,
-        runs_count=5,
-        max_extent=150,
-        child_aspect_ratio=0.5,
-        spacing=10,
-        run_spacing=10,
-    )
-
-    # Agregar fichas visuales al grid
-    for ficha in base_fichas:
-        grid.controls.append(crear_ficha_visual(ficha.numero1, ficha.numero2))
-
-    # Modificar el contenedor principal para incluir el grid de fichas
+    # Modificar el contenedor principal
     page.add(
         ft.Container(
-            content=ft.Column(
+            content=ft.Row(
                 [
-                    titulo,
+                    # Pozo (izquierda)
                     ft.Container(
-                        content=grid,
-                        padding=20,
-                        expand=True
+                        content=pozo_view,
+                        alignment=ft.alignment.center_left,
+                        width=150,
                     ),
+                    # Área principal de juego
                     ft.Container(
-                        content=volver_button,
-                        alignment=ft.alignment.bottom_right
-                    )
+                        content=ft.Column(
+                            [
+                                titulo,
+                                # Fichas de la app (arriba)
+                                fichas_app_view,
+                                # Ficha central
+                                ft.Container(
+                                    content=crear_ficha_visual(ficha_central.numero1, ficha_central.numero2),
+                                    alignment=ft.alignment.center,
+                                    padding=20,
+                                ),
+                                # Fichas del jugador (abajo)
+                                fichas_jugador_view,
+                                volver_button,
+                            ],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        ),
+                        expand=True,
+                    ),
                 ],
-                alignment=ft.MainAxisAlignment.START,
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                expand=True,
             ),
             expand=True,
-            alignment=ft.alignment.top_center,
-            width=1024,
-            height=768
         )
     )
 
