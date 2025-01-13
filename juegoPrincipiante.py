@@ -78,14 +78,15 @@ def repartir_fichas():
     
     return fichas_jugador, fichas_app, pozo
 
-def crear_ficha_visual(numero1, numero2):
+def crear_ficha_visual(numero1, numero2, es_central=False):
+    color_fondo = colors.BLUE_GREY_100 if es_central else colors.WHITE  # Cambiado a un color más visible
     return ft.Container(
         content=ft.Column(
             controls=[
                 ft.Container(
                     content=ft.Text(str(numero1), size=24, color=colors.BLACK),
                     alignment=ft.alignment.center,
-                    bgcolor=colors.WHITE,
+                    bgcolor=color_fondo,
                     width=60,
                     height=60,
                     border=ft.border.all(1, colors.BLACK)
@@ -93,7 +94,7 @@ def crear_ficha_visual(numero1, numero2):
                 ft.Container(
                     content=ft.Text(str(numero2), size=24, color=colors.BLACK),
                     alignment=ft.alignment.center,
-                    bgcolor=colors.WHITE,
+                    bgcolor=color_fondo,
                     width=60,
                     height=60,
                     border=ft.border.all(1, colors.BLACK)
@@ -143,42 +144,46 @@ def crear_zona_destino(page: ft.Page, estado_juego, posicion, on_ficha_jugada, a
     def on_accept(e):
         ficha = page.get_control(e.src_id).data
         
+        # Validar coincidencia de números
         if posicion == "arriba":
             numero_a_comparar = estado_juego.numero_arriba
             numero_valido = ficha.numero2 == numero_a_comparar
             if numero_valido:
-                estado_juego.numero_arriba = ficha.numero1
-                estado_juego.fichas_arriba.append(ficha)
+                estado_juego.numero_arriba = ficha.numero1  # Actualizar con el nuevo número superior
         else:  # posicion == "abajo"
             numero_a_comparar = estado_juego.numero_abajo
             numero_valido = ficha.numero1 == numero_a_comparar
             if numero_valido:
-                estado_juego.numero_abajo = ficha.numero2
-                estado_juego.fichas_abajo.append(ficha)
+                estado_juego.numero_abajo = ficha.numero2  # Actualizar con el nuevo número inferior
         
         if numero_valido:
             estado_juego.fichas_jugadas.append(ficha)
             on_ficha_jugada(ficha, posicion)
             
-            # Crear nueva ficha visual
-            ficha_visual = crear_ficha_visual(ficha.numero1, ficha.numero2)
+            # Crear nueva ficha visual (asegurarse que no sea central)
+            ficha_visual = crear_ficha_visual(ficha.numero1, ficha.numero2, es_central=False)
             
-            # Encontrar el índice de la zona actual basado en la posición
+            # Determinar índices y actualizar el área de juego
             if posicion == "arriba":
-                indice_actual = 0  # La zona superior siempre está al inicio
-            else:
-                indice_actual = len(area_juego.controls) - 1  # La zona inferior siempre está al final
-            
-            # Reemplazar la zona de destino con la ficha
-            area_juego.controls[indice_actual] = ficha_visual
-            
-            # Crear nueva zona de destino solo si hay espacio válido para jugar
-            if posicion == "arriba" and ficha.numero1 != 0:
-                nueva_zona = crear_zona_destino(page, estado_juego, "arriba", on_ficha_jugada, area_juego)
-                area_juego.controls.insert(0, nueva_zona)
-            elif posicion == "abajo" and ficha.numero2 != 0:
-                nueva_zona = crear_zona_destino(page, estado_juego, "abajo", on_ficha_jugada, area_juego)
-                area_juego.controls.append(nueva_zona)
+                indices_zonas = [i for i, control in enumerate(area_juego.controls) 
+                               if isinstance(control, ft.DragTarget)]
+                if indices_zonas:
+                    indice_actual = indices_zonas[0]
+                    # Reemplazar la zona actual con la ficha
+                    area_juego.controls[indice_actual] = ficha_visual
+                    # Crear nueva zona arriba
+                    nueva_zona = crear_zona_destino(page, estado_juego, "arriba", on_ficha_jugada, area_juego)
+                    area_juego.controls.insert(0, nueva_zona)
+            else:  # posicion == "abajo"
+                indices_zonas = [i for i, control in enumerate(area_juego.controls) 
+                               if isinstance(control, ft.DragTarget)]
+                if indices_zonas:
+                    indice_actual = indices_zonas[-1]
+                    # Reemplazar la zona actual con la ficha
+                    area_juego.controls[indice_actual] = ficha_visual
+                    # Crear nueva zona abajo
+                    nueva_zona = crear_zona_destino(page, estado_juego, "abajo", on_ficha_jugada, area_juego)
+                    area_juego.controls.append(nueva_zona)
             
             page.update()
             return True
@@ -289,7 +294,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
     # Crear las zonas de destino y configurar área de juego inicial
     zona_arriba = crear_zona_destino(page, estado_juego, "arriba", on_ficha_jugada, area_juego)
     zona_abajo = crear_zona_destino(page, estado_juego, "abajo", on_ficha_jugada, area_juego)
-    ficha_central_visual = crear_ficha_visual(ficha_central.numero1, ficha_central.numero2)
+    ficha_central_visual = crear_ficha_visual(ficha_central.numero1, ficha_central.numero2, es_central=True)
 
     # Inicializar el área de juego con la ficha central y las zonas
     area_juego.controls = [
