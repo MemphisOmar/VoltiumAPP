@@ -107,6 +107,38 @@ def crear_ficha_visual(numero1, numero2, es_central=False):
         border_radius=5
     )
 
+def crear_ficha_visual_horizontal(numero1, numero2, es_central=False):
+    """Crea una ficha visual en orientación horizontal"""
+    color_fondo = colors.BLUE_GREY_100 if es_central else colors.WHITE
+    return ft.Container(
+        content=ft.Row(
+            controls=[
+                ft.Container(
+                    content=ft.Text(str(numero1), size=24, color=colors.BLACK),
+                    alignment=ft.alignment.center,
+                    bgcolor=color_fondo,
+                    width=60,
+                    height=60,
+                    border=ft.border.all(1, colors.BLACK)
+                ),
+                ft.Container(
+                    content=ft.Text(str(numero2), size=24, color=colors.BLACK),
+                    alignment=ft.alignment.center,
+                    bgcolor=color_fondo,
+                    width=60,
+                    height=60,
+                    border=ft.border.all(1, colors.BLACK)
+                )
+            ],
+            spacing=1,
+            alignment=ft.MainAxisAlignment.CENTER,  # Centrar los contenedores
+        ),
+        bgcolor=colors.BLACK,
+        padding=1,
+        border_radius=5,
+        width=122  # Ancho fijo que corresponde a: 60 (ancho contenedor) * 2 + 1 (spacing) + 1 (padding izq/der)
+    )
+
 def crear_ficha_visual_jugador(ficha, on_drag_complete=None):
     """Crea una ficha visual arrastrable para el jugador con botón de rotación"""
     contenedor_numeros = ft.Container(
@@ -183,19 +215,25 @@ def crear_zona_destino(page: ft.Page, estado_juego, posicion, on_ficha_jugada, a
             numero_a_comparar = estado_juego.numero_arriba
             numero_valido = ficha.numero2 == numero_a_comparar
             if numero_valido:
-                estado_juego.numero_arriba = ficha.numero1  # Actualizar con el nuevo número superior
+                estado_juego.numero_arriba = ficha.numero1
         else:  # posicion == "abajo"
             numero_a_comparar = estado_juego.numero_abajo
             numero_valido = ficha.numero1 == numero_a_comparar
             if numero_valido:
-                estado_juego.numero_abajo = ficha.numero2  # Actualizar con el nuevo número inferior
+                estado_juego.numero_abajo = ficha.numero2
         
         if numero_valido:
             estado_juego.fichas_jugadas.append(ficha)
             on_ficha_jugada(ficha, posicion)
             
-            # Crear nueva ficha visual (asegurarse que no sea central)
-            ficha_visual = crear_ficha_visual(ficha.numero1, ficha.numero2, es_central=False)
+            # Determinar si es una ficha doble
+            es_doble = ficha.numero1 == ficha.numero2
+            
+            # Crear nueva ficha visual según si es doble o no
+            if es_doble:
+                ficha_visual = crear_ficha_visual_horizontal(ficha.numero1, ficha.numero2)
+            else:
+                ficha_visual = crear_ficha_visual(ficha.numero1, ficha.numero2)
             
             # Determinar índices y actualizar el área de juego
             if posicion == "arriba":
@@ -257,6 +295,44 @@ def crear_fichas_jugador_row(fichas, estado_juego, page):
         alignment=ft.MainAxisAlignment.CENTER,
     )
 
+def crear_ficha_pozo(ficha, on_click):
+    """Crea una ficha visual del pozo que se puede hacer clic para agregar a la mano"""
+    return ft.Container(
+        content=ft.Column(
+            controls=[
+                ft.Container(
+                    content=ft.Text(str(ficha.numero1), size=24, color=colors.BLACK),
+                    alignment=ft.alignment.center,
+                    bgcolor=colors.WHITE,
+                    width=60,
+                    height=60,
+                    border=ft.border.all(1, colors.BLACK)
+                ),
+                ft.Container(
+                    content=ft.Text(str(ficha.numero2), size=24, color=colors.BLACK),
+                    alignment=ft.alignment.center,
+                    bgcolor=colors.WHITE,
+                    width=60,
+                    height=60,
+                    border=ft.border.all(1, colors.BLACK)
+                )
+            ],
+            spacing=1,
+        ),
+        bgcolor=colors.BLACK,
+        padding=1,
+        border_radius=5,
+        on_click=lambda e: on_click(ficha),  # Añadir manejador de clic
+    )
+
+def crear_pozo_column(fichas, on_ficha_seleccionada):
+    """Crea una columna de fichas visibles para el pozo que se pueden seleccionar"""
+    return ft.Column(
+        controls=[crear_ficha_pozo(f, on_ficha_seleccionada) for f in fichas],
+        scroll=ft.ScrollMode.AUTO,
+        spacing=5,
+    )
+
 def crear_fichas_app_row(cantidad):
     """Crea una fila de fichas ocultas para la aplicación"""
     ficha_oculta = ft.Container(
@@ -269,14 +345,6 @@ def crear_fichas_app_row(cantidad):
         controls=[ficha_oculta for _ in range(cantidad)],
         scroll=ft.ScrollMode.AUTO,
         alignment=ft.MainAxisAlignment.CENTER,
-    )
-
-def crear_pozo_column(fichas):
-    """Crea una columna de fichas visibles para el pozo"""
-    return ft.Column(
-        controls=[crear_ficha_visual(f.numero1, f.numero2) for f in fichas],
-        scroll=ft.ScrollMode.AUTO,
-        spacing=5,
     )
 
 def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
@@ -316,6 +384,16 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
                 break
         page.update()
 
+    def agregar_ficha_del_pozo(ficha):
+        # Remover la ficha del pozo
+        pozo.remove(ficha)
+        # Agregar la ficha a la mano del jugador
+        fichas_jugador.append(ficha)
+        # Actualizar las vistas
+        fichas_jugador_view.controls.append(crear_ficha_visual_jugador(ficha))
+        pozo_view.controls = [crear_ficha_pozo(f, agregar_ficha_del_pozo) for f in pozo]
+        page.update()
+
     # Área de juego central scrolleable
     area_juego = ft.Column(
         controls=[],
@@ -340,7 +418,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
     # Crear las vistas
     fichas_jugador_view = crear_fichas_jugador_row(fichas_jugador, estado_juego, page)
     fichas_app_view = crear_fichas_app_row(len(fichas_app))
-    pozo_view = crear_pozo_column(pozo)
+    pozo_view = crear_pozo_column(pozo, agregar_ficha_del_pozo)  # Pasar callback
 
     # Modificar el contenedor principal
     page.add(
