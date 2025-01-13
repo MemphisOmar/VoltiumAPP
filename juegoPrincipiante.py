@@ -108,35 +108,69 @@ def crear_ficha_visual(numero1, numero2, es_central=False):
     )
 
 def crear_ficha_visual_jugador(ficha, on_drag_complete=None):
-    """Crea una ficha visual arrastrable para el jugador"""
+    """Crea una ficha visual arrastrable para el jugador con botón de rotación"""
+    contenedor_numeros = ft.Container(
+        content=ft.Column(
+            controls=[
+                ft.Container(
+                    content=ft.Text(str(ficha.numero1), size=24, color=colors.BLACK),
+                    alignment=ft.alignment.center,
+                    bgcolor=colors.WHITE,
+                    width=60,
+                    height=60,
+                    border=ft.border.all(1, colors.BLACK)
+                ),
+                ft.Container(
+                    content=ft.Text(str(ficha.numero2), size=24, color=colors.BLACK),
+                    alignment=ft.alignment.center,
+                    bgcolor=colors.WHITE,
+                    width=60,
+                    height=60,
+                    border=ft.border.all(1, colors.BLACK)
+                )
+            ],
+            spacing=1,
+        ),
+        bgcolor=colors.BLACK,
+        padding=1,
+        border_radius=5
+    )
+
+    def rotar_ficha(e):
+        # Intercambiar los números
+        ficha.numero1, ficha.numero2 = ficha.numero2, ficha.numero1
+        # Actualizar la visualización
+        numeros = contenedor_numeros.content.controls
+        numeros[0].content.value = str(ficha.numero1)
+        numeros[1].content.value = str(ficha.numero2)
+        e.control.page.update()
+
+    boton_rotar = ft.IconButton(
+        icon=ft.icons.ROTATE_RIGHT,
+        icon_color=colors.BLACK,
+        icon_size=20,
+        on_click=rotar_ficha,
+        style=ft.ButtonStyle(
+            bgcolor=colors.BLUE_GREY_200,
+            padding=5,
+        ),
+        width=30,
+        height=30,
+    )
+
     return ft.Draggable(
         content=ft.Container(
             content=ft.Column(
                 controls=[
-                    ft.Container(
-                        content=ft.Text(str(ficha.numero1), size=24, color=colors.BLACK),
-                        alignment=ft.alignment.center,
-                        bgcolor=colors.WHITE,
-                        width=60,
-                        height=60,
-                        border=ft.border.all(1, colors.BLACK)
-                    ),
-                    ft.Container(
-                        content=ft.Text(str(ficha.numero2), size=24, color=colors.BLACK),
-                        alignment=ft.alignment.center,
-                        bgcolor=colors.WHITE,
-                        width=60,
-                        height=60,
-                        border=ft.border.all(1, colors.BLACK)
-                    )
+                    boton_rotar,
+                    contenedor_numeros
                 ],
-                spacing=1,
+                spacing=2,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
-            bgcolor=colors.BLACK,
-            padding=1,
-            border_radius=5
+            padding=ft.padding.only(top=5),
         ),
-        data=ficha,  # Almacenar la ficha original como data
+        data=ficha  # Almacenar la ficha original como data
     )
 
 def crear_zona_destino(page: ft.Page, estado_juego, posicion, on_ficha_jugada, area_juego):
