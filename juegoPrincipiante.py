@@ -5,6 +5,20 @@ from flet import (
     colors
 )
 
+# Diccionario de colores y sus números correspondientes
+COLORES_DOMINO = {
+    0: (colors.BLACK, "Negro"),
+    1: (colors.BROWN, "Marrón"),
+    2: (colors.RED, "Rojo"),
+    3: (colors.ORANGE, "Naranja"), 
+    4: (colors.YELLOW, "Amarillo"),
+    5: (colors.GREEN, "Verde"),
+    6: (colors.BLUE, "Azul"),
+    7: (colors.PURPLE, "Púrpura"),
+    8: (colors.GREY, "Gris"),  # Corregido a Gris
+    9: (colors.WHITE, "Blanco")  # Corregido a Blanco
+}
+
 class FichaDomino:
     def __init__(self, identificador, numero1, numero2):
         self.identificador = identificador
@@ -78,13 +92,35 @@ def repartir_fichas():
     
     return fichas_jugador, fichas_app, pozo
 
+def obtener_representacion_valor(numero):
+    """Decide aleatoriamente si mostrar el número o su color correspondiente"""
+    if random.random() < 0.5:  # 50% de probabilidad para cada representación
+        return ("numero", str(numero))
+    else:
+        color, _ = COLORES_DOMINO[numero]
+        return ("color", color)
+
+def crear_contenido_ficha(valor_representacion):
+    """Crea el contenido de la ficha según el tipo de representación"""
+    tipo, valor = valor_representacion
+    if tipo == "numero":
+        return ft.Text(valor, size=24, color=colors.BLACK)
+    else:  # tipo == "color"
+        return ft.Container(
+            width=40,
+            height=40,
+            bgcolor=valor,
+            border_radius=20  # Hace el contenedor circular
+        )
+
 def crear_ficha_visual(numero1, numero2, es_central=False):
-    color_fondo = colors.BLUE_GREY_100 if es_central else colors.WHITE  # Cambiado a un color más visible
+    color_fondo = colors.BLUE_GREY_100 if es_central else colors.WHITE
+    
     return ft.Container(
         content=ft.Column(
             controls=[
                 ft.Container(
-                    content=ft.Text(str(numero1), size=24, color=colors.BLACK),
+                    content=crear_contenido_ficha(obtener_representacion_valor(numero1)),
                     alignment=ft.alignment.center,
                     bgcolor=color_fondo,
                     width=60,
@@ -92,7 +128,7 @@ def crear_ficha_visual(numero1, numero2, es_central=False):
                     border=ft.border.all(1, colors.BLACK)
                 ),
                 ft.Container(
-                    content=ft.Text(str(numero2), size=24, color=colors.BLACK),
+                    content=crear_contenido_ficha(obtener_representacion_valor(numero2)),
                     alignment=ft.alignment.center,
                     bgcolor=color_fondo,
                     width=60,
@@ -110,11 +146,12 @@ def crear_ficha_visual(numero1, numero2, es_central=False):
 def crear_ficha_visual_horizontal(numero1, numero2, es_central=False):
     """Crea una ficha visual en orientación horizontal"""
     color_fondo = colors.BLUE_GREY_100 if es_central else colors.WHITE
+    
     return ft.Container(
         content=ft.Row(
             controls=[
                 ft.Container(
-                    content=ft.Text(str(numero1), size=24, color=colors.BLACK),
+                    content=crear_contenido_ficha(obtener_representacion_valor(numero1)),
                     alignment=ft.alignment.center,
                     bgcolor=color_fondo,
                     width=60,
@@ -122,7 +159,7 @@ def crear_ficha_visual_horizontal(numero1, numero2, es_central=False):
                     border=ft.border.all(1, colors.BLACK)
                 ),
                 ft.Container(
-                    content=ft.Text(str(numero2), size=24, color=colors.BLACK),
+                    content=crear_contenido_ficha(obtener_representacion_valor(numero2)),
                     alignment=ft.alignment.center,
                     bgcolor=color_fondo,
                     width=60,
@@ -141,40 +178,42 @@ def crear_ficha_visual_horizontal(numero1, numero2, es_central=False):
 
 def crear_ficha_visual_jugador(ficha, on_drag_complete=None):
     """Crea una ficha visual arrastrable para el jugador con botón de rotación"""
-    contenedor_numeros = ft.Container(
-        content=ft.Column(
-            controls=[
-                ft.Container(
-                    content=ft.Text(str(ficha.numero1), size=24, color=colors.BLACK),
-                    alignment=ft.alignment.center,
-                    bgcolor=colors.WHITE,
-                    width=60,
-                    height=60,
-                    border=ft.border.all(1, colors.BLACK)
-                ),
-                ft.Container(
-                    content=ft.Text(str(ficha.numero2), size=24, color=colors.BLACK),
-                    alignment=ft.alignment.center,
-                    bgcolor=colors.WHITE,
-                    width=60,
-                    height=60,
-                    border=ft.border.all(1, colors.BLACK)
-                )
-            ],
-            spacing=1,
-        ),
-        bgcolor=colors.BLACK,
-        padding=1,
-        border_radius=5
-    )
+    def crear_contenedor_numeros():
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Container(
+                        content=crear_contenido_ficha(obtener_representacion_valor(ficha.numero1)),
+                        alignment=ft.alignment.center,
+                        bgcolor=colors.WHITE,
+                        width=60,
+                        height=60,
+                        border=ft.border.all(1, colors.BLACK)
+                    ),
+                    ft.Container(
+                        content=crear_contenido_ficha(obtener_representacion_valor(ficha.numero2)),
+                        alignment=ft.alignment.center,
+                        bgcolor=colors.WHITE,
+                        width=60,
+                        height=60,
+                        border=ft.border.all(1, colors.BLACK)
+                    )
+                ],
+                spacing=1,
+            ),
+            bgcolor=colors.BLACK,
+            padding=1,
+            border_radius=5
+        )
+
+    contenedor_numeros = crear_contenedor_numeros()
 
     def rotar_ficha(e):
         # Intercambiar los números
         ficha.numero1, ficha.numero2 = ficha.numero2, ficha.numero1
         # Actualizar la visualización
-        numeros = contenedor_numeros.content.controls
-        numeros[0].content.value = str(ficha.numero1)
-        numeros[1].content.value = str(ficha.numero2)
+        contenedor_numeros.content.controls[0].content = crear_contenido_ficha(obtener_representacion_valor(ficha.numero1))
+        contenedor_numeros.content.controls[1].content = crear_contenido_ficha(obtener_representacion_valor(ficha.numero2))
         e.control.page.update()
 
     boton_rotar = ft.IconButton(
@@ -230,7 +269,7 @@ def crear_zona_destino(page: ft.Page, estado_juego, posicion, on_ficha_jugada, a
             es_doble = ficha.numero1 == ficha.numero2
             
             # Crear nueva ficha visual según si es doble o no
-            if es_doble:
+            if (es_doble):
                 ficha_visual = crear_ficha_visual_horizontal(ficha.numero1, ficha.numero2)
             else:
                 ficha_visual = crear_ficha_visual(ficha.numero1, ficha.numero2)
@@ -301,7 +340,7 @@ def crear_ficha_pozo(ficha, on_click):
         content=ft.Column(
             controls=[
                 ft.Container(
-                    content=ft.Text(str(ficha.numero1), size=24, color=colors.BLACK),
+                    content=crear_contenido_ficha(obtener_representacion_valor(ficha.numero1)),
                     alignment=ft.alignment.center,
                     bgcolor=colors.WHITE,
                     width=60,
@@ -309,7 +348,7 @@ def crear_ficha_pozo(ficha, on_click):
                     border=ft.border.all(1, colors.BLACK)
                 ),
                 ft.Container(
-                    content=ft.Text(str(ficha.numero2), size=24, color=colors.BLACK),
+                    content=crear_contenido_ficha(obtener_representacion_valor(ficha.numero2)),
                     alignment=ft.alignment.center,
                     bgcolor=colors.WHITE,
                     width=60,
