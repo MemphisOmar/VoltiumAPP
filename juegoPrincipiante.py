@@ -113,7 +113,8 @@ def crear_contenido_ficha(valor_representacion):
             width=40,
             height=40,
             bgcolor=valor,
-            border_radius=20  # Hace el contenedor circular
+            border_radius=20,  
+            border=ft.border.all(0.5, colors.BLACK)  # Borde negro delgado
         )
 
 def crear_ficha_visual(numero1, numero2, es_central=False, repr1=None, repr2=None):
