@@ -464,19 +464,20 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         ft.Container(
             content=ft.Row(
                 [
-                    # Pozo (izquierda)
                     ft.Container(
                         content=pozo_view,
                         alignment=ft.alignment.center_left,
-                        width=150,
+                        width=100,
+                        margin=0,
                     ),
-                    # Área principal de juego
                     ft.Container(
                         content=ft.Column(
                             [
                                 titulo,
-                                fichas_app_view,
-                                # Envolver area_juego en un contenedor con altura fija
+                                ft.Container(
+                                    content=fichas_app_view,
+                                    padding=2,
+                                ),
                                 ft.Container(
                                     content=area_juego,
                                     height=400,
@@ -484,16 +485,28 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
                                     border_radius=5,
                                     padding=10,
                                 ),
-                                fichas_jugador_view,
-                                volver_button,
+                                ft.Container(
+                                    content=fichas_jugador_view,
+                                    padding=2,
+                                ),
+                                ft.Container(
+                                    content=volver_button,
+                                    alignment=ft.alignment.center,
+                                    padding=5,
+                                ),
                             ],
                             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                            spacing=5,
                         ),
                         expand=True,
+                        margin=ft.margin.only(right=20),  # Aumentado de 5 a 20
+                        padding=ft.margin.only(left=0),
                     ),
                 ],
                 expand=True,
+                spacing=0,
+                alignment=ft.MainAxisAlignment.START,
             ),
             expand=True,
         )
