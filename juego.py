@@ -123,7 +123,27 @@ def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego, volver_al_menu
     numero_random = random.choice(resistencias_comerciales)
     codigo_colores = obtener_codigo_colores(numero_random)
 
-    # Crear los contenedores arrastrables con colores
+    # Crear una lista con todos los colores posibles
+    todos_los_colores = [colors.BLACK, colors.BROWN, colors.RED, colors.ORANGE, 
+                        colors.YELLOW, colors.GREEN, colors.BLUE, colors.PURPLE, 
+                        colors.GREY, colors.WHITE]
+    
+    # Asegurarse de que los colores correctos estén incluidos
+    colores_juego = codigo_colores.copy()
+    
+    # Remover los colores correctos de la lista de todos los colores
+    for color in colores_juego:
+        if color in todos_los_colores:
+            todos_los_colores.remove(color)
+    
+    # Seleccionar aleatoriamente los colores adicionales para completar las opciones
+    colores_adicionales = random.sample(todos_los_colores, 7)  # 7 + 3 = 10 colores en total
+    
+    # Combinar y mezclar todos los colores para las opciones
+    colores_opciones = colores_juego + colores_adicionales
+    random.shuffle(colores_opciones)
+
+    # Modificar la función crear_receptor_color para usar los colores mezclados
     def crear_receptor_color(color):
         return ft.Draggable(
             content=ft.Container(
@@ -134,8 +154,17 @@ def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego, volver_al_menu
                 padding=ft.padding.all(10)
             )
         )
-    
 
+    # Crear los receptores con los colores mezclados
+    receptores = [crear_receptor_color(color) for color in colores_opciones[:10]]  # Limitamos a 10 opciones
+    
+    # Crear la fila de receptores con los nuevos colores mezclados
+    receptores_row = ft.Row(
+        controls=receptores,
+        alignment=ft.MainAxisAlignment.CENTER,
+        spacing=20,
+        wrap=True  # Permite que los receptores se envuelvan en múltiples filas si no caben
+    )
 
     def verificar_respuesta(e=None):
         nonlocal intentos
@@ -143,73 +172,60 @@ def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego, volver_al_menu
         color2 = drop_target2.content.bgcolor
         color3 = drop_target3.content.bgcolor
         
-        colores_correctos = [
-            color1 == codigo_colores[0],
-            color2 == codigo_colores[1],
-            color3 == codigo_colores[2]
-        ]
-        
-        if all(colores_correctos):
-            dlg = ft.AlertDialog(
-                title=ft.Text("¡Correcto!"),
-                content=ft.Text("Has acertado la combinación de colores.")
-            )
-            page.dialog = dlg
-            dlg.open = True
-        else:
-            intentos += 1
-            if intentos >= 2:
+        # Obtener los valores numéricos según el código de colores
+        def obtener_valor_color(color):
+            colores_valores = {
+                colors.BLACK: 0,    # Negro
+                colors.BROWN: 1,    # Marrón
+                colors.RED: 2,      # Rojo
+                colors.ORANGE: 3,   # Naranja
+                colors.YELLOW: 4,   # Amarillo
+                colors.GREEN: 5,    # Verde
+                colors.BLUE: 6,     # Azul
+                colors.PURPLE: 7,   # Violeta
+                colors.GREY: 8,     # Gris
+                colors.WHITE: 9     # Blanco 
+            }
+            return colores_valores.get(color)
+
+        # Obtener valores numéricos de los colores seleccionados
+        valor1 = obtener_valor_color(color1)
+        valor2 = obtener_valor_color(color2)
+        multiplicador = obtener_valor_color(color3)
+
+        # Calcular el valor de la resistencia según los colores seleccionados
+        if valor1 is not None and valor2 is not None and multiplicador is not None:
+            valor_seleccionado = (valor1 * 10 + valor2) * (10 ** multiplicador)
+            
+            if valor_seleccionado == numero_random:
                 dlg = ft.AlertDialog(
-                    title=ft.Text("Límite de intentos alcanzado"),
-                    content=ft.Text("Pasando al siguiente nivel...")
+                    title=ft.Text("¡Correcto!"),
+                    content=ft.Text(f"¡Has acertado! El valor {numero_random}Ω corresponde a los colores seleccionados.")
                 )
                 page.dialog = dlg
                 dlg.open = True
-                # Delay to show message before changing level
-                page.update()
-                configurar_ventana_medio(page, volver_al_menu_juego, volver_al_menu_principal)
+                # Después de acertar, mostrar nuevo problema
+                page.dialog.on_dismiss = lambda _: configurar_ventana_facil(page, volver_al_menu_juego, volver_al_menu_principal)
             else:
-                dlg = ft.AlertDialog(
-                    title=ft.Text("Incorrecto"),
-                    content=ft.Text(f"La combinación no es correcta. Te queda {2-intentos} intento.")
-                )
-                page.dialog = dlg
-                dlg.open = True
+                intentos += 1
+                if intentos >= 2:
+                    dlg = ft.AlertDialog(
+                        title=ft.Text("Límite de intentos alcanzado"),
+                        content=ft.Text(f"La respuesta correcta era {numero_random}Ω. Intentemos con otro problema...")
+                    )
+                    page.dialog = dlg
+                    dlg.open = True
+                    # Al cerrar el diálogo, mostrar nuevo problema
+                    page.dialog.on_dismiss = lambda _: configurar_ventana_facil(page, volver_al_menu_juego, volver_al_menu_principal)
+                else:
+                    dlg = ft.AlertDialog(
+                        title=ft.Text("Incorrecto"),
+                        content=ft.Text(f"El valor {valor_seleccionado}Ω no es correcto. Te queda {2-intentos} intento.")
+                    )
+                    page.dialog = dlg
+                    dlg.open = True
         
         page.update()
-
-
-
-    def verificar_respuesta(e=None):  # Make event parameter optional
-        color1 = drop_target1.content.bgcolor
-        color2 = drop_target2.content.bgcolor
-        color3 = drop_target3.content.bgcolor
-        
-        colores_correctos = [
-            color1 == codigo_colores[0],
-            color2 == codigo_colores[1],
-            color3 == codigo_colores[2]
-        ]
-        
-        if all(colores_correctos):
-            dlg = ft.AlertDialog(
-                title=ft.Text("¡Correcto!"),
-                content=ft.Text("Has acertado la combinación de colores.")
-            )
-        else:
-            dlg = ft.AlertDialog(
-                title=ft.Text("Incorrecto"),
-                content=ft.Text("La combinación no es correcta. Intenta de nuevo.")
-            )
-        
-        page.dialog = dlg
-        dlg.open = True
-        page.update()
-
-    boton_verificar = ft.ElevatedButton(
-        text="Verificar respuesta",
-        on_click=lambda e: verificar_respuesta(e)  # Properly pass event parameter
-    )
 
     # Crear las zonas donde se soltarán los colores
     def on_accept(e):
@@ -240,12 +256,6 @@ def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego, volver_al_menu
     drop_target3 = crear_drop_target()
 
     # Crear filas de receptores y destinos
-    receptores_row = ft.Row(
-        controls=[receptor1, receptor2, receptor3],
-        alignment=ft.MainAxisAlignment.CENTER,
-        spacing=20
-    )
-
     drop_targets_row = ft.Row(
         controls=[drop_target1, drop_target2, drop_target3],
         alignment=ft.MainAxisAlignment.CENTER,
@@ -264,8 +274,6 @@ def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego, volver_al_menu
         on_click=volver_al_menu_click
     )
 
-
-
     def reset_targets(e):
         drop_target1.content.bgcolor = colors.GREY_200
         drop_target2.content.bgcolor = colors.GREY_200
@@ -277,7 +285,6 @@ def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego, volver_al_menu
         text="Reiniciar",
         on_click=reset_targets
     ) 
-
 
     page.add(
         ft.Container(
@@ -446,7 +453,7 @@ def configurar_ventana_dificil(page: ft.Page, volver_al_menu_juego, volver_al_me
     page.title = "Modo de Juego Dificil"
     page.bgcolor = colors.WHITE
     page.window_width = 720
-    page.window_height = 1280
+    page.window_height=1280
     page.window_resizable = False
     page.padding = 0
     page.margin = 0
