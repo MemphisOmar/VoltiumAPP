@@ -24,6 +24,9 @@ class FichaDomino:
         self.identificador = identificador
         self.numero1 = numero1
         self.numero2 = numero2
+        # Agregar representaciones iniciales para cada número
+        self.repr1 = obtener_representacion_valor(numero1)
+        self.repr2 = obtener_representacion_valor(numero2)
 
     def __str__(self):
         return f"Ficha {self.identificador}: [{self.numero1}|{self.numero2}]"
@@ -113,14 +116,18 @@ def crear_contenido_ficha(valor_representacion):
             border_radius=20  # Hace el contenedor circular
         )
 
-def crear_ficha_visual(numero1, numero2, es_central=False):
+def crear_ficha_visual(numero1, numero2, es_central=False, repr1=None, repr2=None):
     color_fondo = colors.BLUE_GREY_100 if es_central else colors.WHITE
+    
+    # Usar representaciones pasadas o generar nuevas si no se proporcionaron
+    repr1 = repr1 or obtener_representacion_valor(numero1)
+    repr2 = repr2 or obtener_representacion_valor(numero2)
     
     return ft.Container(
         content=ft.Column(
             controls=[
                 ft.Container(
-                    content=crear_contenido_ficha(obtener_representacion_valor(numero1)),
+                    content=crear_contenido_ficha(repr1),
                     alignment=ft.alignment.center,
                     bgcolor=color_fondo,
                     width=60,
@@ -128,7 +135,7 @@ def crear_ficha_visual(numero1, numero2, es_central=False):
                     border=ft.border.all(1, colors.BLACK)
                 ),
                 ft.Container(
-                    content=crear_contenido_ficha(obtener_representacion_valor(numero2)),
+                    content=crear_contenido_ficha(repr2),
                     alignment=ft.alignment.center,
                     bgcolor=color_fondo,
                     width=60,
@@ -143,15 +150,18 @@ def crear_ficha_visual(numero1, numero2, es_central=False):
         border_radius=5
     )
 
-def crear_ficha_visual_horizontal(numero1, numero2, es_central=False):
+def crear_ficha_visual_horizontal(numero1, numero2, es_central=False, repr1=None, repr2=None):
     """Crea una ficha visual en orientación horizontal"""
     color_fondo = colors.BLUE_GREY_100 if es_central else colors.WHITE
+    
+    repr1 = repr1 or obtener_representacion_valor(numero1)
+    repr2 = repr2 or obtener_representacion_valor(numero2)
     
     return ft.Container(
         content=ft.Row(
             controls=[
                 ft.Container(
-                    content=crear_contenido_ficha(obtener_representacion_valor(numero1)),
+                    content=crear_contenido_ficha(repr1),
                     alignment=ft.alignment.center,
                     bgcolor=color_fondo,
                     width=60,
@@ -159,7 +169,7 @@ def crear_ficha_visual_horizontal(numero1, numero2, es_central=False):
                     border=ft.border.all(1, colors.BLACK)
                 ),
                 ft.Container(
-                    content=crear_contenido_ficha(obtener_representacion_valor(numero2)),
+                    content=crear_contenido_ficha(repr2),
                     alignment=ft.alignment.center,
                     bgcolor=color_fondo,
                     width=60,
@@ -183,7 +193,7 @@ def crear_ficha_visual_jugador(ficha, on_drag_complete=None):
             content=ft.Column(
                 controls=[
                     ft.Container(
-                        content=crear_contenido_ficha(obtener_representacion_valor(ficha.numero1)),
+                        content=crear_contenido_ficha(ficha.repr1),
                         alignment=ft.alignment.center,
                         bgcolor=colors.WHITE,
                         width=60,
@@ -191,7 +201,7 @@ def crear_ficha_visual_jugador(ficha, on_drag_complete=None):
                         border=ft.border.all(1, colors.BLACK)
                     ),
                     ft.Container(
-                        content=crear_contenido_ficha(obtener_representacion_valor(ficha.numero2)),
+                        content=crear_contenido_ficha(ficha.repr2),
                         alignment=ft.alignment.center,
                         bgcolor=colors.WHITE,
                         width=60,
@@ -209,11 +219,12 @@ def crear_ficha_visual_jugador(ficha, on_drag_complete=None):
     contenedor_numeros = crear_contenedor_numeros()
 
     def rotar_ficha(e):
-        # Intercambiar los números
+        # Intercambiar los números y sus representaciones
         ficha.numero1, ficha.numero2 = ficha.numero2, ficha.numero1
+        ficha.repr1, ficha.repr2 = ficha.repr2, ficha.repr1
         # Actualizar la visualización
-        contenedor_numeros.content.controls[0].content = crear_contenido_ficha(obtener_representacion_valor(ficha.numero1))
-        contenedor_numeros.content.controls[1].content = crear_contenido_ficha(obtener_representacion_valor(ficha.numero2))
+        contenedor_numeros.content.controls[0].content = crear_contenido_ficha(ficha.repr1)
+        contenedor_numeros.content.controls[1].content = crear_contenido_ficha(ficha.repr2)
         e.control.page.update()
 
     boton_rotar = ft.IconButton(
@@ -270,9 +281,9 @@ def crear_zona_destino(page: ft.Page, estado_juego, posicion, on_ficha_jugada, a
             
             # Crear nueva ficha visual según si es doble o no
             if (es_doble):
-                ficha_visual = crear_ficha_visual_horizontal(ficha.numero1, ficha.numero2)
+                ficha_visual = crear_ficha_visual_horizontal(ficha.numero1, ficha.numero2, repr1=ficha.repr1, repr2=ficha.repr2)
             else:
-                ficha_visual = crear_ficha_visual(ficha.numero1, ficha.numero2)
+                ficha_visual = crear_ficha_visual(ficha.numero1, ficha.numero2, repr1=ficha.repr1, repr2=ficha.repr2)
             
             # Determinar índices y actualizar el área de juego
             if posicion == "arriba":
@@ -340,7 +351,7 @@ def crear_ficha_pozo(ficha, on_click):
         content=ft.Column(
             controls=[
                 ft.Container(
-                    content=crear_contenido_ficha(obtener_representacion_valor(ficha.numero1)),
+                    content=crear_contenido_ficha(ficha.repr1),
                     alignment=ft.alignment.center,
                     bgcolor=colors.WHITE,
                     width=60,
@@ -348,7 +359,7 @@ def crear_ficha_pozo(ficha, on_click):
                     border=ft.border.all(1, colors.BLACK)
                 ),
                 ft.Container(
-                    content=crear_contenido_ficha(obtener_representacion_valor(ficha.numero2)),
+                    content=crear_contenido_ficha(ficha.repr2),
                     alignment=ft.alignment.center,
                     bgcolor=colors.WHITE,
                     width=60,
@@ -445,7 +456,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
     # Crear las zonas de destino y configurar área de juego inicial
     zona_arriba = crear_zona_destino(page, estado_juego, "arriba", on_ficha_jugada, area_juego)
     zona_abajo = crear_zona_destino(page, estado_juego, "abajo", on_ficha_jugada, area_juego)
-    ficha_central_visual = crear_ficha_visual(ficha_central.numero1, ficha_central.numero2, es_central=True)
+    ficha_central_visual = crear_ficha_visual(ficha_central.numero1, ficha_central.numero2, es_central=True, repr1=ficha_central.repr1, repr2=ficha_central.repr2)
 
     # Inicializar el área de juego con la ficha central y las zonas
     area_juego.controls = [
