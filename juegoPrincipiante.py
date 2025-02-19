@@ -76,16 +76,16 @@ def repartir_fichas():
     if not fichas_disponibles:
         fichas_disponibles = crear_fichas_domino()
     
-    # Repartir 15 fichas para el jugador
+    # Repartir 7 fichas para el jugador (cambiado de 8 a 7)
     fichas_jugador = []
-    for _ in range(15):
+    for _ in range(7):
         ficha = random.choice(fichas_disponibles)
         fichas_jugador.append(ficha)
         fichas_disponibles.remove(ficha)
     
-    # Repartir 15 fichas para la aplicación
+    # Repartir 7 fichas para la aplicación
     fichas_app = []
-    for _ in range(15):
+    for _ in range(7):
         ficha = random.choice(fichas_disponibles)
         fichas_app.append(ficha)
         fichas_disponibles.remove(ficha)
@@ -377,10 +377,54 @@ def crear_ficha_pozo(ficha, on_click):
     )
 
 def crear_pozo_column(fichas, on_ficha_seleccionada):
-    """Crea una columna de fichas visibles para el pozo que se pueden seleccionar"""
-    return ft.Column(
-        controls=[crear_ficha_pozo(f, on_ficha_seleccionada) for f in fichas],
+    """Crea una columna de fichas ocultas para el pozo"""
+    texto_pozo = ft.Text(f"Pozo ({len(fichas)})", size=20, color=colors.BLACK)
+    columna_fichas = None
+
+    def actualizar_vista_pozo():
+        """Actualiza el contador y las fichas visuales del pozo"""
+        texto_pozo.value = f"Pozo ({len(fichas)})"
+        if len(columna_fichas.controls) > len(fichas):
+            columna_fichas.controls.pop()
+
+    def on_ficha_click(e, ficha):
+        if ficha in fichas:
+            on_ficha_seleccionada(ficha)
+            actualizar_vista_pozo()
+            e.control.page.update()
+
+    # Crear las fichas ocultas con más espacio entre ellas
+    columna_fichas = ft.Column(
+        controls=[
+            ft.Container(
+                width=80,  # Aumentado de 60 a 80
+                height=140,  # Aumentado de 120 a 140
+                bgcolor=colors.BROWN,
+                border_radius=5,
+                border=ft.border.all(1, colors.BLACK),
+                margin=ft.margin.only(bottom=5),  # Agregar margen entre fichas
+                on_click=lambda e, f=ficha: on_ficha_click(e, f)
+            ) 
+            for ficha in fichas
+        ],
+        spacing=2,
         scroll=ft.ScrollMode.AUTO,
+        height=600  # Altura fija para la columna de fichas
+    )
+    
+    return ft.Column(
+        controls=[
+            texto_pozo,
+            ft.Container(
+                content=columna_fichas,
+                width=120,  # Ancho fijo para el contenedor
+                height=600,  # Aumentado de 300 a 600
+                border=ft.border.all(1, colors.GREY_400),
+                border_radius=5,
+                padding=10
+            )
+        ],
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         spacing=5,
     )
 
@@ -398,7 +442,52 @@ def crear_fichas_app_row(cantidad):
         alignment=ft.MainAxisAlignment.CENTER,
     )
 
+def encontrar_ficha_inicial(fichas_jugador, fichas_app):
+    """
+    Determina quién tiene la ficha más alta y cuál es esa ficha.
+    Prioriza dobles y luego suma de números.
+    Retorna: (ficha, "jugador"/"app")
+    """
+    def valor_ficha(ficha):
+        # Priorizar dobles
+        if ficha.numero1 == ficha.numero2:
+            return (1, ficha.numero1, ficha.numero2)  # (es_doble, primer_numero, segundo_numero)
+        # Para no dobles, ordenar por suma de números
+        return (0, max(ficha.numero1, ficha.numero2), min(ficha.numero1, ficha.numero2))
+    
+    mejor_ficha_jugador = max(fichas_jugador, key=valor_ficha)
+    mejor_ficha_app = max(fichas_app, key=valor_ficha)
+    
+    if valor_ficha(mejor_ficha_jugador) > valor_ficha(mejor_ficha_app):
+        return mejor_ficha_jugador, "jugador"
+    return mejor_ficha_app, "app"
+
 def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
+    # Determinar aleatoriamente el modo de juego
+    modo_maquina_colores = random.choice([True, False])
+    
+    # Definir el mensaje según el modo
+    modo_mensaje = ("Jugarás con números y la máquina con colores" 
+                   if modo_maquina_colores else 
+                   "Jugarás con colores y la máquina con números")
+
+    def obtener_representacion_forzada(numero, es_para_jugador):
+        """Fuerza la representación según el modo de juego"""
+        color, _ = COLORES_DOMINO[numero]
+        if modo_maquina_colores:
+            # Máquina usa colores, jugador usa números
+            return ("color", color) if not es_para_jugador else ("numero", str(numero))
+        else:
+            # Máquina usa números, jugador usa colores
+            return ("numero", str(numero)) if not es_para_jugador else ("color", color)
+
+    def convertir_fichas_segun_modo(fichas, es_para_jugador):
+        """Convierte todas las fichas al modo correspondiente"""
+        for ficha in fichas:
+            ficha.repr1 = obtener_representacion_forzada(ficha.numero1, es_para_jugador)
+            ficha.repr2 = obtener_representacion_forzada(ficha.numero2, es_para_jugador)
+        return fichas
+
     def volver_al_menu_principal_click(e):
         volver_al_menu_principal(page)
 
@@ -423,9 +512,79 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
     )
 
     # Repartir fichas
-    ficha_central = seleccionar_ficha_aleatoria()
-    estado_juego = EstadoJuego(ficha_central)
     fichas_jugador, fichas_app, pozo = repartir_fichas()
+    
+    # Convertir las fichas según el modo
+    fichas_jugador = convertir_fichas_segun_modo(fichas_jugador, True)
+    fichas_app = convertir_fichas_segun_modo(fichas_app, False)
+    
+    # Determinar ficha central y quién empieza
+    ficha_central, quien_empieza = encontrar_ficha_inicial(fichas_jugador, fichas_app)
+    
+    # Remover la ficha central de quien la tenía
+    if quien_empieza == "jugador":
+        fichas_jugador.remove(ficha_central)
+    else:
+        fichas_app.remove(ficha_central)
+    
+    estado_juego = EstadoJuego(ficha_central)
+
+    def cerrar_dialogo(e):
+        dlg.open = False
+        page.update()
+
+    # Mostrar mensaje del modo de juego más compacto
+    dlg = ft.AlertDialog(
+        title=ft.Text(
+            "Modo de Juego",
+            size=18,
+            weight=ft.FontWeight.BOLD,
+            text_align=ft.TextAlign.CENTER
+        ),
+        content=ft.Container(
+            content=ft.Column(
+                [
+                    ft.Container(
+                        content=ft.Text(
+                            modo_mensaje,
+                            size=14,
+                            text_align=ft.TextAlign.CENTER
+                        ),
+                        padding=ft.padding.all(5)
+                    ),
+                    ft.Divider(height=1, color=colors.BLUE_GREY_200),
+                    ft.Container(
+                        content=ft.Text(
+                            f"{'Tú empiezas' if quien_empieza == 'jugador' else 'La computadora empieza'} "
+                            f"con la ficha [{ficha_central.numero1}-{ficha_central.numero2}]",
+                            size=14,
+                            text_align=ft.TextAlign.CENTER
+                        ),
+                        padding=ft.padding.all(5)
+                    )
+                ],
+                tight=True,
+                spacing=0,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER
+            ),
+            padding=ft.padding.all(5),
+            width=280
+        ),
+        actions=[
+            ft.ElevatedButton(
+                "Entendido",
+                on_click=cerrar_dialogo,  # Cambiado para usar la nueva función
+                style=ft.ButtonStyle(
+                    color=colors.WHITE,
+                    bgcolor=colors.BLUE_400
+                )
+            )
+        ],
+        actions_alignment=ft.MainAxisAlignment.CENTER,
+        shape=ft.RoundedRectangleBorder(radius=8)
+    )
+    page.dialog = dlg
+    dlg.open = True
 
     def on_ficha_jugada(ficha, lado):
         # Remover la ficha jugada de la mano del jugador
@@ -436,14 +595,15 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         page.update()
 
     def agregar_ficha_del_pozo(ficha):
-        # Remover la ficha del pozo
-        pozo.remove(ficha)
-        # Agregar la ficha a la mano del jugador
-        fichas_jugador.append(ficha)
-        # Actualizar las vistas
-        fichas_jugador_view.controls.append(crear_ficha_visual_jugador(ficha))
-        pozo_view.controls = [crear_ficha_pozo(f, agregar_ficha_del_pozo) for f in pozo]
-        page.update()
+        """Función que se llama cuando se selecciona una ficha del pozo"""
+        if ficha in pozo:  # Verificar que la ficha aún está en el pozo
+            pozo.remove(ficha)  # Primero remover la ficha del pozo
+            # Convertir la ficha al modo del jugador antes de agregarla
+            ficha.repr1 = obtener_representacion_forzada(ficha.numero1, True)
+            ficha.repr2 = obtener_representacion_forzada(ficha.numero2, True)
+            fichas_jugador.append(ficha)  # Luego agregarla al jugador
+            fichas_jugador_view.controls.append(crear_ficha_visual_jugador(ficha))
+            page.update()
 
     # Área de juego central scrolleable
     area_juego = ft.Column(
@@ -457,7 +617,16 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
     # Crear las zonas de destino y configurar área de juego inicial
     zona_arriba = crear_zona_destino(page, estado_juego, "arriba", on_ficha_jugada, area_juego)
     zona_abajo = crear_zona_destino(page, estado_juego, "abajo", on_ficha_jugada, area_juego)
-    ficha_central_visual = crear_ficha_visual(ficha_central.numero1, ficha_central.numero2, es_central=True, repr1=ficha_central.repr1, repr2=ficha_central.repr2)
+    
+    # Determinar si la ficha central es doble
+    es_ficha_central_doble = ficha_central.numero1 == ficha_central.numero2
+    
+    # Crear ficha central visual según si es doble o no
+    ficha_central_visual = (
+        crear_ficha_visual_horizontal(ficha_central.numero1, ficha_central.numero2, es_central=True, repr1=ficha_central.repr1, repr2=ficha_central.repr2)
+        if es_ficha_central_doble
+        else crear_ficha_visual(ficha_central.numero1, ficha_central.numero2, es_central=True, repr1=ficha_central.repr1, repr2=ficha_central.repr2)
+    )
 
     # Inicializar el área de juego con la ficha central y las zonas
     area_juego.controls = [
@@ -479,7 +648,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
                     ft.Container(
                         content=pozo_view,
                         alignment=ft.alignment.center_left,
-                        width=100,
+                        width=140,  # Aumentado de 100 a 140
                         margin=0,
                     ),
                     ft.Container(
