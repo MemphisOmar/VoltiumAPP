@@ -2,7 +2,7 @@ import flet as ft
 from flet import colors
 from juegoPrincipiante import configurar_ventana_domino #Importar la subrutina desde juego.py
 import random
-
+from db_manager import DBManager
 
 def configurar_ventana_juego(page: ft.Page, volver_al_menu_principal):
     def volver_al_menu_principal_click(e):
@@ -64,6 +64,7 @@ def configurar_ventana_juego(page: ft.Page, volver_al_menu_principal):
     page.update()  
 
 
+
 def obtener_codigo_colores(resistencia):
     colores = {
         0: colors.BLACK,    # Negro
@@ -103,8 +104,57 @@ def obtener_codigo_colores(resistencia):
         ]
 
 def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego, volver_al_menu_principal):
+    db = DBManager()
     
+    def mostrar_dialogo_registro():
+        nombre_input = ft.TextField(label="Nombre", width=300)
+        grupo_input = ft.TextField(label="Grupo", width=300)
+        
+        def guardar_registro(e):
+            nombre = nombre_input.value
+            grupo = grupo_input.value
+            
+            if nombre and grupo:
+                puntaje = db.registrar_jugador(nombre, grupo)
+                dlg.open = False
+                page.update()
+                
+                # Mostrar mensaje de bienvenida con el puntaje inicial
+                dlg_bienvenida = ft.AlertDialog(
+                    title=ft.Text("¡Bienvenido!"),
+                    content=ft.Text(f"¡Hola {nombre}!\nTu puntaje inicial es: {puntaje}"),
+                )
+                page.dialog = dlg_bienvenida
+                dlg_bienvenida.open = True
+                page.update()
+            else:
+                # Mostrar mensaje de error si faltan datos
+                error_dlg = ft.AlertDialog(
+                    title=ft.Text("Error"),
+                    content=ft.Text("Por favor, completa todos los campos"),
+                )
+                page.dialog = error_dlg
+                error_dlg.open = True
+                page.update()
+        
+        dlg = ft.AlertDialog(
+            title=ft.Text("Registro de Jugador"),
+            content=ft.Column([
+                nombre_input,
+                grupo_input,
+            ], tight=True),
+            actions=[
+                ft.ElevatedButton("Guardar", on_click=guardar_registro)
+            ],
+        )
+        
+        page.dialog = dlg
+        dlg.open = True
+        page.update()
     
+    # Llamar al diálogo de registro al inicio
+    mostrar_dialogo_registro()
+
     def volver_al_menu_click(e):
         volver_al_menu_juego(page, volver_al_menu_principal)
 
