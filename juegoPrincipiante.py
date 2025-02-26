@@ -605,6 +605,105 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
             fichas_jugador_view.controls.append(crear_ficha_visual_jugador(ficha))
             page.update()
 
+    def mostrar_mensaje(page, mensaje):
+        """Muestra un mensaje temporal en la pantalla"""
+        dlg = ft.AlertDialog(
+            content=ft.Text(mensaje),
+            actions=[
+                ft.TextButton("OK", on_click=lambda e: cerrar_mensaje(e, dlg))
+            ]
+        )
+        page.dialog = dlg
+        dlg.open = True
+        page.update()
+
+    def cerrar_mensaje(e, dlg):
+        dlg.open = False
+        e.page.update()
+
+    # Función para colocar una ficha especial en el tablero
+    def colocar_ficha_especial(e=None):
+        # Verificar los números actuales del tablero
+        numero_arriba = estado_juego.numero_arriba
+        numero_abajo = estado_juego.numero_abajo
+        
+        # Crear una ficha que coincida con alguno de los extremos
+        # Generar un número aleatorio diferente al extremo con el que coincidirá
+        if random.random() < 0.5:  # 50% probabilidad para elegir arriba o abajo
+            # Crear ficha para arriba
+            nuevo_numero = random.choice([n for n in range(10) if n != numero_arriba])
+            ficha_especial = FichaDomino(999, nuevo_numero, numero_arriba)  # ID especial 999
+            ficha_especial.repr1 = obtener_representacion_forzada(nuevo_numero, True)
+            ficha_especial.repr2 = obtener_representacion_forzada(numero_arriba, True)
+            lado_a_jugar = "arriba"
+        else:
+            # Crear ficha para abajo
+            nuevo_numero = random.choice([n for n in range(10) if n != numero_abajo])
+            ficha_especial = FichaDomino(999, numero_abajo, nuevo_numero)  # ID especial 999
+            ficha_especial.repr1 = obtener_representacion_forzada(numero_abajo, True)
+            ficha_especial.repr2 = obtener_representacion_forzada(nuevo_numero, True)
+            lado_a_jugar = "abajo"
+        
+        # Añadir la ficha al área de juego
+        if lado_a_jugar == "arriba":
+            # Actualizar el número arriba
+            estado_juego.numero_arriba = ficha_especial.numero1
+            
+            # Determinar si es una ficha doble
+            es_doble = ficha_especial.numero1 == ficha_especial.numero2
+            
+            # Crear nueva ficha visual
+            ficha_visual = (
+                crear_ficha_visual_horizontal(ficha_especial.numero1, ficha_especial.numero2, 
+                                             repr1=ficha_especial.repr1, repr2=ficha_especial.repr2)
+                if es_doble else
+                crear_ficha_visual(ficha_especial.numero1, ficha_especial.numero2, 
+                                  repr1=ficha_especial.repr1, repr2=ficha_especial.repr2)
+            )
+            
+            # Encontrar la zona de arriba y reemplazarla
+            indices_zonas = [i for i, control in enumerate(area_juego.controls) 
+                            if isinstance(control, ft.DragTarget)]
+            if indices_zonas:
+                indice_actual = indices_zonas[0]
+                # Reemplazar la zona actual con la ficha
+                area_juego.controls[indice_actual] = ficha_visual
+                # Crear nueva zona arriba
+                nueva_zona = crear_zona_destino(page, estado_juego, "arriba", on_ficha_jugada, area_juego)
+                area_juego.controls.insert(0, nueva_zona)
+            
+        else:  # lado_a_jugar == "abajo"
+            # Actualizar el número abajo
+            estado_juego.numero_abajo = ficha_especial.numero2
+            
+            # Determinar si es una ficha doble
+            es_doble = ficha_especial.numero1 == ficha_especial.numero2
+            
+            # Crear nueva ficha visual
+            ficha_visual = (
+                crear_ficha_visual_horizontal(ficha_especial.numero1, ficha_especial.numero2, 
+                                             repr1=ficha_especial.repr1, repr2=ficha_especial.repr2)
+                if es_doble else
+                crear_ficha_visual(ficha_especial.numero1, ficha_especial.numero2, 
+                                  repr1=ficha_especial.repr1, repr2=ficha_especial.repr2)
+            )
+            
+            # Encontrar la zona de abajo y reemplazarla
+            indices_zonas = [i for i, control in enumerate(area_juego.controls) 
+                            if isinstance(control, ft.DragTarget)]
+            if indices_zonas:
+                indice_actual = indices_zonas[-1]
+                # Reemplazar la zona actual con la ficha
+                area_juego.controls[indice_actual] = ficha_visual
+                # Crear nueva zona abajo
+                nueva_zona = crear_zona_destino(page, estado_juego, "abajo", on_ficha_jugada, area_juego)
+                area_juego.controls.append(nueva_zona)
+        
+        # Notificar al usuario
+        mensaje = f"La computadora ha jugado una ficha [{ficha_especial.numero1}|{ficha_especial.numero2}]"
+        mostrar_mensaje(page, mensaje)
+        page.update()
+
     # Área de juego central scrolleable
     area_juego = ft.Column(
         controls=[],
@@ -640,6 +739,18 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
     fichas_app_view = crear_fichas_app_row(len(fichas_app))
     pozo_view = crear_pozo_column(pozo, agregar_ficha_del_pozo)  # Pasar callback
 
+    # Botón renombrado para hacer jugar al oponente
+    boton_jugar_oponente = ft.ElevatedButton(
+        text="Hacer jugar al oponente",
+        on_click=colocar_ficha_especial,
+        width=200,
+        height=50,
+        style=ft.ButtonStyle(
+            color=colors.WHITE,
+            bgcolor=colors.BLUE_700  # Cambiado a azul para mantener coherencia
+        )
+    )
+
     # Modificar el contenedor principal
     page.add(
         ft.Container(
@@ -670,11 +781,15 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
                                     content=fichas_jugador_view,
                                     padding=2,
                                 ),
-                                ft.Container(
-                                    content=volver_button,
-                                    alignment=ft.alignment.center,
-                                    padding=5,
-                                ),
+                                ft.Column(
+                                    [
+                                        boton_jugar_oponente,
+                                        volver_button
+                                    ],
+                                    alignment=ft.MainAxisAlignment.CENTER,
+                                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                    spacing=10
+                                )
                             ],
                             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
