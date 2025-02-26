@@ -633,15 +633,17 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
             # Crear ficha para arriba
             nuevo_numero = random.choice([n for n in range(10) if n != numero_arriba])
             ficha_especial = FichaDomino(999, nuevo_numero, numero_arriba)  # ID especial 999
-            ficha_especial.repr1 = obtener_representacion_forzada(nuevo_numero, True)
-            ficha_especial.repr2 = obtener_representacion_forzada(numero_arriba, True)
+            # Usar representación opuesta a la del jugador (es_para_jugador = False)
+            ficha_especial.repr1 = obtener_representacion_forzada(nuevo_numero, False)
+            ficha_especial.repr2 = obtener_representacion_forzada(numero_arriba, False)
             lado_a_jugar = "arriba"
         else:
             # Crear ficha para abajo
             nuevo_numero = random.choice([n for n in range(10) if n != numero_abajo])
             ficha_especial = FichaDomino(999, numero_abajo, nuevo_numero)  # ID especial 999
-            ficha_especial.repr1 = obtener_representacion_forzada(numero_abajo, True)
-            ficha_especial.repr2 = obtener_representacion_forzada(nuevo_numero, True)
+            # Usar representación opuesta a la del jugador (es_para_jugador = False)
+            ficha_especial.repr1 = obtener_representacion_forzada(numero_abajo, False)
+            ficha_especial.repr2 = obtener_representacion_forzada(nuevo_numero, False)
             lado_a_jugar = "abajo"
         
         # Añadir la ficha al área de juego
@@ -699,8 +701,8 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
                 nueva_zona = crear_zona_destino(page, estado_juego, "abajo", on_ficha_jugada, area_juego)
                 area_juego.controls.append(nueva_zona)
         
-        # Notificar al usuario
-        mensaje = f"La computadora ha jugado una ficha [{ficha_especial.numero1}|{ficha_especial.numero2}]"
+        # Notificar al usuario con un mensaje más general
+        mensaje = "La computadora ha jugado una ficha"
         mostrar_mensaje(page, mensaje)
         page.update()
 
@@ -809,3 +811,4 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
     )
 
     page.update()
+
