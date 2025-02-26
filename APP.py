@@ -19,9 +19,9 @@ def main(page: ft.Page):
     page.bgcolor = "#b9b3a7"
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-    page.window_width = 720
-    page.window_height = 1280
-    page.window_resizable = False
+    page.window.width = 720
+    page.window.height = 1280
+    page.window.resizable = False
     page.padding = 0
     page.margin = 0
 

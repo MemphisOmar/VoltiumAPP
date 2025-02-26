@@ -3,6 +3,9 @@ from flet import colors
 from juegoPrincipiante import configurar_ventana_domino #Importar la subrutina desde juego.py
 import random
 from db_manager import DBManager
+import time
+import asyncio
+import threading
 
 def configurar_ventana_juego(page: ft.Page, volver_al_menu_principal):
     def volver_al_menu_principal_click(e):
@@ -105,8 +108,26 @@ def obtener_codigo_colores(resistencia):
 
 def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego, volver_al_menu_principal):
     db = DBManager()
+    tiempo_inicio = time.time()  # Iniciamos el tiempo inmediatamente
+    tiempo_total = 0
+    puntaje = 100  # Puntaje inicial
+    timer_active = True
     
-    def mostrar_dialogo_registro():
+    def update_cronometro(e):
+        if not timer_active or not tiempo_inicio:
+            return
+        
+        tiempo_actual = time.time()
+        tiempo_transcurrido = int(tiempo_actual - tiempo_inicio)
+        minutos = tiempo_transcurrido // 60
+        segundos = tiempo_transcurrido % 60
+        texto_cronometro.value = f"Tiempo: {minutos:02d}:{segundos:02d}"
+        page.update()
+        
+        if timer_active:
+            page.invoke_after(1, update_cronometro)
+
+    def mostrar_dialogo_registro(puntaje_final, tiempo_total):
         nombre_input = ft.TextField(label="Nombre", width=300)
         grupo_input = ft.TextField(label="Grupo", width=300)
         
@@ -115,20 +136,13 @@ def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego, volver_al_menu
             grupo = grupo_input.value
             
             if nombre and grupo:
-                puntaje = db.registrar_jugador(nombre, grupo)
+                # Guardar en la base de datos
+                db.actualizar_puntaje(nombre, grupo, puntaje_final, tiempo_total)
                 dlg.open = False
                 page.update()
-                
-                # Mostrar mensaje de bienvenida con el puntaje inicial
-                dlg_bienvenida = ft.AlertDialog(
-                    title=ft.Text("¡Bienvenido!"),
-                    content=ft.Text(f"¡Hola {nombre}!\nTu puntaje inicial es: {puntaje}"),
-                )
-                page.dialog = dlg_bienvenida
-                dlg_bienvenida.open = True
-                page.update()
+                # Volver al menú de juego
+                volver_al_menu_juego(page, volver_al_menu_principal)
             else:
-                # Mostrar mensaje de error si faltan datos
                 error_dlg = ft.AlertDialog(
                     title=ft.Text("Error"),
                     content=ft.Text("Por favor, completa todos los campos"),
@@ -138,8 +152,11 @@ def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego, volver_al_menu
                 page.update()
         
         dlg = ft.AlertDialog(
-            title=ft.Text("Registro de Jugador"),
+            title=ft.Text("¡Juego Terminado!"),
             content=ft.Column([
+                ft.Text(f"Tiempo total: {tiempo_total//60:02d}:{tiempo_total%60:02d}"),
+                ft.Text(f"Puntaje final: {puntaje_final}"),
+                ft.Text("Ingresa tus datos para guardar tu puntuación:"),
                 nombre_input,
                 grupo_input,
             ], tight=True),
@@ -151,13 +168,23 @@ def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego, volver_al_menu
         page.dialog = dlg
         dlg.open = True
         page.update()
-    
-    # Llamar al diálogo de registro al inicio
-    mostrar_dialogo_registro()
+
+    def finalizar_juego():
+        nonlocal tiempo_total, puntaje, timer_active
+        timer_active = False
+        tiempo_total = int(time.time() - tiempo_inicio)
+        # Calcular puntaje final basado en el tiempo y los intentos
+        puntaje_final = max(0, puntaje - (tiempo_total // 30))  # Reducir puntos cada 30 segundos
+        mostrar_dialogo_registro(puntaje_final, tiempo_total)
+
+    # Crear el texto del cronómetro antes de usarlo
+    texto_cronometro = ft.Text("Tiempo: 00:00", size=20, color=colors.BLACK)
 
     def volver_al_menu_click(e):
-        volver_al_menu_juego(page, volver_al_menu_principal)
+        finalizar_juego()
 
+    # Añadir el texto del cronómetro a la interfaz
+    texto_cronometro = ft.Text("Tiempo: 00:00", size=20, color=colors.BLACK)
 
     intentos = 0  # Add counter at start
     # Configuración inicial de la ventana
@@ -217,7 +244,7 @@ def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego, volver_al_menu
     )
 
     def verificar_respuesta(e=None):
-        nonlocal intentos
+        nonlocal intentos, puntaje
         color1 = drop_target1.content.bgcolor
         color2 = drop_target2.content.bgcolor
         color3 = drop_target3.content.bgcolor
@@ -248,25 +275,25 @@ def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego, volver_al_menu
             valor_seleccionado = (valor1 * 10 + valor2) * (10 ** multiplicador)
             
             if valor_seleccionado == numero_random:
+                puntaje += 50  # Bonus por respuesta correcta
                 dlg = ft.AlertDialog(
                     title=ft.Text("¡Correcto!"),
                     content=ft.Text(f"¡Has acertado! El valor {numero_random}Ω corresponde a los colores seleccionados.")
                 )
                 page.dialog = dlg
                 dlg.open = True
-                # Después de acertar, mostrar nuevo problema
-                page.dialog.on_dismiss = lambda _: configurar_ventana_facil(page, volver_al_menu_juego, volver_al_menu_principal)
+                finalizar_juego()
             else:
                 intentos += 1
+                puntaje -= 25  # Penalización por respuesta incorrecta
                 if intentos >= 2:
                     dlg = ft.AlertDialog(
                         title=ft.Text("Límite de intentos alcanzado"),
-                        content=ft.Text(f"La respuesta correcta era {numero_random}Ω. Intentemos con otro problema...")
+                        content=ft.Text(f"La respuesta correcta era {numero_random}Ω.")
                     )
                     page.dialog = dlg
                     dlg.open = True
-                    # Al cerrar el diálogo, mostrar nuevo problema
-                    page.dialog.on_dismiss = lambda _: configurar_ventana_facil(page, volver_al_menu_juego, volver_al_menu_principal)
+                    finalizar_juego()
                 else:
                     dlg = ft.AlertDialog(
                         title=ft.Text("Incorrecto"),
@@ -340,6 +367,7 @@ def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego, volver_al_menu
         ft.Container(
             content=ft.Column(
                 controls=[
+                    texto_cronometro,  # Añadir el cronómetro
                      ft.Image(
                         src="resistor_facil.png",
                         width=400,
@@ -614,3 +642,4 @@ def configurar_ventana_dificil(page: ft.Page, volver_al_menu_juego, volver_al_me
     )
 
     page.update()
+

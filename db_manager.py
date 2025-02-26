@@ -11,16 +11,29 @@ class DBManager:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
-        # Crear tabla de jugadores si no existe
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS jugadores (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nombre TEXT NOT NULL,
-                grupo TEXT NOT NULL,
-                puntaje INTEGER NOT NULL,
-                fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
+        # Check if table exists
+        cursor.execute('''SELECT count(name) FROM sqlite_master WHERE type='table' AND name='jugadores' ''')
+        
+        if cursor.fetchone()[0] == 0:
+            # Table doesn't exist, create it with all columns
+            cursor.execute('''
+                CREATE TABLE jugadores (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nombre TEXT NOT NULL,
+                    grupo TEXT NOT NULL,
+                    puntaje INTEGER NOT NULL,
+                    tiempo INTEGER,
+                    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+        else:
+            # Table exists, check if tiempo column exists
+            cursor.execute('PRAGMA table_info(jugadores)')
+            columns = [col[1] for col in cursor.fetchall()]
+            
+            if 'tiempo' not in columns:
+                # Add tiempo column if it doesn't exist
+                cursor.execute('ALTER TABLE jugadores ADD COLUMN tiempo INTEGER')
         
         conn.commit()
         conn.close()
@@ -55,3 +68,26 @@ class DBManager:
         resultados = cursor.fetchall()
         conn.close()
         return resultados
+
+    def actualizar_puntaje(self, nombre, grupo, puntaje, tiempo):
+        """
+        Guarda o actualiza el puntaje de un jugador
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        try:
+            cursor.execute('''
+                INSERT INTO jugadores (nombre, grupo, puntaje, tiempo)
+                VALUES (?, ?, ?, ?)
+            ''', (nombre, grupo, puntaje, tiempo))
+            conn.commit()
+        except sqlite3.OperationalError:
+            # If insert fails, try without tiempo column
+            cursor.execute('''
+                INSERT INTO jugadores (nombre, grupo, puntaje)
+                VALUES (?, ?, ?)
+            ''', (nombre, grupo, puntaje))
+            conn.commit()
+        finally:
+            conn.close()
