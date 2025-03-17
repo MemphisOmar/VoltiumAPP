@@ -146,12 +146,14 @@ def crear_contenido_ficha(valor_representacion):
         # En lugar de mostrar el número como texto, mostrar puntos
         return crear_representacion_puntos(int(valor))
     else:  # tipo == "color"
+        # En lugar de un círculo, llenar toda la mitad de la ficha con el color
         return ft.Container(
-            width=40,
-            height=40,
+            width=60,  # Ancho completo de la mitad de la ficha
+            height=60,  # Alto completo de la mitad de la ficha
             bgcolor=valor,
-            border_radius=20,  
-            border=ft.border.all(0.5, colors.BLACK)  # Borde negro delgado
+            # No usamos border_radius para que sea rectangular, no circular
+            # Mantenemos un borde negro para la consistencia visual
+            border=ft.border.all(0.5, colors.BLACK)
         )
 
 def crear_ficha_visual(numero1, numero2, es_central=False, repr1=None, repr2=None):
@@ -161,24 +163,32 @@ def crear_ficha_visual(numero1, numero2, es_central=False, repr1=None, repr2=Non
     repr1 = repr1 or obtener_representacion_valor(numero1)
     repr2 = repr2 or obtener_representacion_valor(numero2)
     
+    # Determinar el tipo de cada representación
+    tipo1, _ = repr1
+    tipo2, _ = repr2
+    
     return ft.Container(
         content=ft.Column(
             controls=[
                 ft.Container(
                     content=crear_contenido_ficha(repr1),
                     alignment=ft.alignment.center,
-                    bgcolor=color_fondo,
+                    # Solo usamos el color de fondo si es representación de números
+                    bgcolor=color_fondo if tipo1 == "numero" else None,
                     width=60,
                     height=60,
-                    border=ft.border.all(1, colors.BLACK)
+                    # Solo añadimos borde si es representación de números
+                    border=ft.border.all(1, colors.BLACK) if tipo1 == "numero" else None
                 ),
                 ft.Container(
                     content=crear_contenido_ficha(repr2),
                     alignment=ft.alignment.center,
-                    bgcolor=color_fondo,
+                    # Solo usamos el color de fondo si es representación de números
+                    bgcolor=color_fondo if tipo2 == "numero" else None,
                     width=60,
                     height=60,
-                    border=ft.border.all(1, colors.BLACK)
+                    # Solo añadimos borde si es representación de números
+                    border=ft.border.all(1, colors.BLACK) if tipo2 == "numero" else None
                 )
             ],
             spacing=1,
@@ -195,24 +205,32 @@ def crear_ficha_visual_horizontal(numero1, numero2, es_central=False, repr1=None
     repr1 = repr1 or obtener_representacion_valor(numero1)
     repr2 = repr2 or obtener_representacion_valor(numero2)
     
+    # Determinar el tipo de cada representación
+    tipo1, _ = repr1
+    tipo2, _ = repr2
+    
     return ft.Container(
         content=ft.Row(
             controls=[
                 ft.Container(
                     content=crear_contenido_ficha(repr1),
                     alignment=ft.alignment.center,
-                    bgcolor=color_fondo,
+                    # Solo usamos el color de fondo si es representación de números
+                    bgcolor=color_fondo if tipo1 == "numero" else None,
                     width=60,
                     height=60,
-                    border=ft.border.all(1, colors.BLACK)
+                    # Solo añadimos borde si es representación de números
+                    border=ft.border.all(1, colors.BLACK) if tipo1 == "numero" else None
                 ),
                 ft.Container(
                     content=crear_contenido_ficha(repr2),
                     alignment=ft.alignment.center,
-                    bgcolor=color_fondo,
+                    # Solo usamos el color de fondo si es representación de números
+                    bgcolor=color_fondo if tipo2 == "numero" else None,
                     width=60,
                     height=60,
-                    border=ft.border.all(1, colors.BLACK)
+                    # Solo añadimos borde si es representación de números
+                    border=ft.border.all(1, colors.BLACK) if tipo2 == "numero" else None
                 )
             ],
             spacing=1,
@@ -227,24 +245,32 @@ def crear_ficha_visual_horizontal(numero1, numero2, es_central=False, repr1=None
 def crear_ficha_visual_jugador(ficha, on_drag_complete=None):
     """Crea una ficha visual arrastrable para el jugador con botón de rotación"""
     def crear_contenedor_numeros():
+        # Determinar el tipo de cada representación
+        tipo1, _ = ficha.repr1
+        tipo2, _ = ficha.repr2
+        
         return ft.Container(
             content=ft.Column(
                 controls=[
                     ft.Container(
                         content=crear_contenido_ficha(ficha.repr1),
                         alignment=ft.alignment.center,
-                        bgcolor=colors.WHITE,
+                        # Solo usamos el color de fondo si es representación de números
+                        bgcolor=colors.WHITE if tipo1 == "numero" else None,
                         width=60,
                         height=60,
-                        border=ft.border.all(1, colors.BLACK)
+                        # Solo añadimos borde si es representación de números
+                        border=ft.border.all(1, colors.BLACK) if tipo1 == "numero" else None
                     ),
                     ft.Container(
                         content=crear_contenido_ficha(ficha.repr2),
                         alignment=ft.alignment.center,
-                        bgcolor=colors.WHITE,
+                        # Solo usamos el color de fondo si es representación de números
+                        bgcolor=colors.WHITE if tipo2 == "numero" else None,
                         width=60,
                         height=60,
-                        border=ft.border.all(1, colors.BLACK)
+                        # Solo añadimos borde si es representación de números
+                        border=ft.border.all(1, colors.BLACK) if tipo2 == "numero" else None
                     )
                 ],
                 spacing=1,
@@ -576,6 +602,11 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
     else:
         fichas_app.remove(ficha_central)
     
+    # Forzar la representación de la ficha central según el modo del tablero
+    # Es importante que esto sea después de removerla y antes de crear el estado de juego
+    ficha_central.repr1 = obtener_representacion_forzada(ficha_central.numero1, False)
+    ficha_central.repr2 = obtener_representacion_forzada(ficha_central.numero2, False)
+    
     estado_juego = EstadoJuego(ficha_central)
 
     def cerrar_dialogo(e):
@@ -860,6 +891,8 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
     )
 
     page.update()
+
+
 
 
 
