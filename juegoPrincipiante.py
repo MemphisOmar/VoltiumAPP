@@ -577,13 +577,13 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
     page.padding = 0
     page.margin = 0
 
-    # Título de la página
-    titulo = ft.Text("Modo Principiante", size=30, color=colors.BLACK)
+    # Título de la página - reducido de tamaño
+    titulo = ft.Text("Modo Principiante", size=24, color=colors.BLACK)
     volver_button = ft.ElevatedButton(
         text="Volver al menú",
         on_click=volver_al_menu_principal_click,
-        width=200,
-        height=50
+        width=120,  # Reducido de 200 a 120
+        height=40   # Reducido de 50 a 40
     )
 
     # Repartir fichas
@@ -786,13 +786,13 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         mostrar_mensaje(page, mensaje)
         page.update()
 
-    # Área de juego central scrolleable
+    # Área de juego central scrolleable - altura reducida
     area_juego = ft.Column(
         controls=[],
         alignment=ft.MainAxisAlignment.CENTER,
-        spacing=10,
+        spacing=5,  # Reducido de 10 a 5
         scroll=ft.ScrollMode.AUTO,  # Hacer scrolleable
-        height=400,                 # Altura fija para el área de juego
+        height=350,  # Reducido de 400 a 350
     )
 
     # Crear las zonas de destino y configurar área de juego inicial
@@ -821,15 +821,15 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
     fichas_app_view = crear_fichas_app_row(len(fichas_app))
     pozo_view = crear_pozo_column(pozo, agregar_ficha_del_pozo)  # Pasar callback
 
-    # Botón renombrado para hacer jugar al oponente
+    # Botón renombrado para hacer jugar al oponente - reducido
     boton_jugar_oponente = ft.ElevatedButton(
-        text="Hacer jugar al oponente",
+        text="Hacer jugar al oponente",  # Texto cambiado
         on_click=colocar_ficha_especial,
-        width=200,
-        height=50,
+        width=120,  # Reducido de 200 a 120
+        height=40,  # Reducido de 50 a 40
         style=ft.ButtonStyle(
             color=colors.WHITE,
-            bgcolor=colors.BLUE_700  # Cambiado a azul para mantener coherencia
+            bgcolor=colors.BLUE_700
         )
     )
 
@@ -839,9 +839,16 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
             content=ft.Row(
                 [
                     ft.Container(
-                        content=pozo_view,
+                        content=ft.Column(
+                            [
+                                pozo_view,
+                                volver_button  # Ya está debajo del pozo
+                            ],
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                            spacing=10,
+                        ),
                         alignment=ft.alignment.center_left,
-                        width=140,  # Aumentado de 100 a 140
+                        width=140,
                         margin=0,
                     ),
                     ft.Container(
@@ -851,35 +858,34 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
                                 ft.Container(
                                     content=fichas_app_view,
                                     padding=2,
+                                    height=100,  # Altura fija reducida
+                                ),
+                                ft.Container(
+                                    content=boton_jugar_oponente,  # Movido aquí, debajo de las cartas del oponente
+                                    alignment=ft.alignment.center,
+                                    padding=5,
                                 ),
                                 ft.Container(
                                     content=area_juego,
-                                    height=400,
+                                    height=350,  # Reducido para coincidir con area_juego
                                     border=ft.border.all(1, colors.GREY_400),
                                     border_radius=5,
-                                    padding=10,
+                                    padding=5,  # Reducido de 10 a 5
                                 ),
                                 ft.Container(
                                     content=fichas_jugador_view,
                                     padding=2,
+                                    height=150,  # Altura fija reducida
                                 ),
-                                ft.Column(
-                                    [
-                                        boton_jugar_oponente,
-                                        volver_button
-                                    ],
-                                    alignment=ft.MainAxisAlignment.CENTER,
-                                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                                    spacing=10
-                                )
+                                # Se eliminó el contenedor del botón que estaba aquí
                             ],
-                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                            alignment=ft.MainAxisAlignment.START,
                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                             spacing=5,
                         ),
                         expand=True,
-                        margin=ft.margin.only(right=20),  # Aumentado de 5 a 20
-                        padding=ft.margin.only(left=0),
+                        margin=ft.margin.only(right=10),
+                        padding=0,
                     ),
                 ],
                 expand=True,
