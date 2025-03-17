@@ -471,9 +471,17 @@ def crear_ficha_pozo(ficha, on_click):
         on_click=lambda e: on_click(ficha),  # Añadir manejador de clic
     )
 
-def crear_pozo_column(fichas, on_ficha_seleccionada):
-    """Crea una columna de fichas ocultas para el pozo"""
-    texto_pozo = ft.Text(f"Pozo ({len(fichas)})", size=20, color=colors.BLACK)
+def crear_pozo_column(fichas, on_ficha_seleccionada, fichas_jugador=None, fichas_app=None, ficha_central_presente=True):
+    """
+    Crea una columna de fichas ocultas para el pozo
+    
+    Args:
+        fichas: Lista de fichas en el pozo
+        on_ficha_seleccionada: Función callback cuando se selecciona una ficha
+        fichas_jugador, fichas_app, ficha_central_presente: Parámetros no utilizados
+    """
+    # Simplificar para mostrar solo el número de fichas en el pozo
+    texto_pozo = ft.Text(f"Pozo ({len(fichas)})", size=16, color=colors.BLACK, text_align=ft.TextAlign.CENTER)
     columna_fichas = None
 
     def actualizar_vista_pozo():
@@ -558,6 +566,10 @@ def encontrar_ficha_inicial(fichas_jugador, fichas_app):
     return mejor_ficha_app, "app"
 
 def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
+    # Restablece las variables globales cuando se inicia el juego
+    global fichas_disponibles
+    fichas_disponibles = crear_fichas_domino()
+    
     # Determinar aleatoriamente el modo de juego
     # TRUE: Tablero central con números y jugador con colores
     # FALSE: Tablero central con colores y jugador con números
@@ -586,6 +598,10 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         return fichas
 
     def volver_al_menu_principal_click(e):
+        # Reiniciar todas las variables globales antes de volver al menú
+        global fichas_disponibles
+        fichas_disponibles = crear_fichas_domino()
+        # Llamar a la función para volver al menú principal
         volver_al_menu_principal(page)
 
     # Función para obtener el mensaje de la ficha inicial según el modo
@@ -648,7 +664,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         dlg.open = False
         page.update()
 
-    # Mostrar mensaje del modo de juego más compacto con nombres de colores si corresponde
+    # Modificar el diálogo para no incluir información sobre el número total de fichas
     dlg = ft.AlertDialog(
         title=ft.Text(
             "Modo de Juego",
@@ -857,7 +873,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
     # Crear las vistas
     fichas_jugador_view = crear_fichas_jugador_row(fichas_jugador, estado_juego, page)
     fichas_app_view = crear_fichas_app_row(len(fichas_app))
-    pozo_view = crear_pozo_column(pozo, agregar_ficha_del_pozo)  # Pasar callback
+    pozo_view = crear_pozo_column(pozo, agregar_ficha_del_pozo)  # Simplificamos la llamada
 
     # Botón renombrado para hacer jugar al oponente - reducido
     boton_jugar_oponente = ft.ElevatedButton(
