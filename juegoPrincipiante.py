@@ -103,11 +103,48 @@ def obtener_representacion_valor(numero):
         color, _ = COLORES_DOMINO[numero]
         return ("color", color)
 
+def crear_representacion_puntos(numero):
+    """Crea una representación visual de un número como puntos de dominó tradicional"""
+    # Definir posiciones para los puntos según el número (0-9)
+    # Las posiciones están en una cuadrícula 3x3 escalada a un contenedor de 40x40
+    posiciones = {
+        0: [],  # Sin puntos
+        1: [(20, 20)],  # Centro
+        2: [(10, 10), (30, 30)],  # Esquinas opuestas
+        3: [(10, 10), (20, 20), (30, 30)],  # Diagonal con centro
+        4: [(10, 10), (10, 30), (30, 10), (30, 30)],  # Esquinas
+        5: [(10, 10), (10, 30), (20, 20), (30, 10), (30, 30)],  # Esquinas y centro
+        6: [(10, 10), (10, 20), (10, 30), (30, 10), (30, 20), (30, 30)],  # Lados izquierdo y derecho
+        7: [(10, 10), (10, 20), (10, 30), (20, 20), (30, 10), (30, 20), (30, 30)],  # Lados y centro
+        8: [(10, 10), (10, 20), (10, 30), (20, 10), (20, 30), (30, 10), (30, 20), (30, 30)],  # Lados y aristas sin centro
+        9: [(10, 10), (10, 20), (10, 30), (20, 10), (20, 20), (20, 30), (30, 10), (30, 20), (30, 30)]  # Cuadrícula completa
+    }
+    
+    # Crear un stack con los puntos en las posiciones correspondientes
+    stack = ft.Stack(
+        controls=[
+            ft.Container(
+                width=8,
+                height=8,
+                border_radius=4,
+                bgcolor=colors.BLACK,
+                left=x - 4,
+                top=y - 4
+            )
+            for x, y in posiciones.get(numero, [])
+        ],
+        width=40,
+        height=40
+    )
+    
+    return stack
+
 def crear_contenido_ficha(valor_representacion):
     """Crea el contenido de la ficha según el tipo de representación"""
     tipo, valor = valor_representacion
     if tipo == "numero":
-        return ft.Text(valor, size=24, color=colors.BLACK)
+        # En lugar de mostrar el número como texto, mostrar puntos
+        return crear_representacion_puntos(int(valor))
     else:  # tipo == "color"
         return ft.Container(
             width=40,
@@ -823,5 +860,6 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
     )
 
     page.update()
+
 
 
