@@ -174,8 +174,10 @@ def crear_contenido_ficha(valor_representacion):
             border=ft.border.all(0.5, colors.BLACK)
         )
 
-def crear_ficha_visual(numero1, numero2, es_central=False, repr1=None, repr2=None):
+# Añadir un parámetro para el color del borde
+def crear_ficha_visual(numero1, numero2, es_central=False, repr1=None, repr2=None, es_computadora=False):
     color_fondo = colors.BLUE_GREY_100 if es_central else colors.WHITE
+    color_borde = colors.BROWN if es_computadora else colors.BLACK
     
     # Usar representaciones pasadas o generar nuevas si no se proporcionaron
     repr1 = repr1 or obtener_representacion_valor(numero1)
@@ -196,7 +198,7 @@ def crear_ficha_visual(numero1, numero2, es_central=False, repr1=None, repr2=Non
                     width=60,
                     height=60,
                     # Solo añadimos borde si es representación de números
-                    border=ft.border.all(1, colors.BLACK) if tipo1 == "numero" else None
+                    border=ft.border.all(1, color_borde) if tipo1 == "numero" else None
                 ),
                 ft.Container(
                     content=crear_contenido_ficha(repr2),
@@ -206,19 +208,21 @@ def crear_ficha_visual(numero1, numero2, es_central=False, repr1=None, repr2=Non
                     width=60,
                     height=60,
                     # Solo añadimos borde si es representación de números
-                    border=ft.border.all(1, colors.BLACK) if tipo2 == "numero" else None
+                    border=ft.border.all(1, color_borde) if tipo2 == "numero" else None
                 )
             ],
             spacing=1,
         ),
-        bgcolor=colors.BLACK,
+        bgcolor=color_borde,  # También cambiar el color del borde exterior
         padding=1,
         border_radius=5
     )
 
-def crear_ficha_visual_horizontal(numero1, numero2, es_central=False, repr1=None, repr2=None):
+# Añadir el mismo parámetro para la versión horizontal
+def crear_ficha_visual_horizontal(numero1, numero2, es_central=False, repr1=None, repr2=None, es_computadora=False):
     """Crea una ficha visual en orientación horizontal"""
     color_fondo = colors.BLUE_GREY_100 if es_central else colors.WHITE
+    color_borde = colors.BROWN if es_computadora else colors.BLACK
     
     repr1 = repr1 or obtener_representacion_valor(numero1)
     repr2 = repr2 or obtener_representacion_valor(numero2)
@@ -238,7 +242,7 @@ def crear_ficha_visual_horizontal(numero1, numero2, es_central=False, repr1=None
                     width=60,
                     height=60,
                     # Solo añadimos borde si es representación de números
-                    border=ft.border.all(1, colors.BLACK) if tipo1 == "numero" else None
+                    border=ft.border.all(1, color_borde) if tipo1 == "numero" else None
                 ),
                 ft.Container(
                     content=crear_contenido_ficha(repr2),
@@ -248,13 +252,13 @@ def crear_ficha_visual_horizontal(numero1, numero2, es_central=False, repr1=None
                     width=60,
                     height=60,
                     # Solo añadimos borde si es representación de números
-                    border=ft.border.all(1, colors.BLACK) if tipo2 == "numero" else None
+                    border=ft.border.all(1, color_borde) if tipo2 == "numero" else None
                 )
             ],
             spacing=1,
             alignment=ft.MainAxisAlignment.CENTER,  # Centrar los contenedores
         ),
-        bgcolor=colors.BLACK,
+        bgcolor=color_borde,  # También cambiar el color del borde exterior
         padding=1,
         border_radius=5,
         width=122  # Ancho fijo que corresponde a: 60 (ancho contenedor) * 2 + 1 (spacing) + 1 (padding izq/der)
@@ -752,13 +756,15 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
             # Determinar si es una ficha doble
             es_doble = ficha_especial.numero1 == ficha_especial.numero2
             
-            # Crear nueva ficha visual
+            # Crear nueva ficha visual con borde café (es_computadora=True)
             ficha_visual = (
                 crear_ficha_visual_horizontal(ficha_especial.numero1, ficha_especial.numero2, 
-                                             repr1=ficha_especial.repr1, repr2=ficha_especial.repr2)
+                                             repr1=ficha_especial.repr1, repr2=ficha_especial.repr2,
+                                             es_computadora=True)
                 if es_doble else
                 crear_ficha_visual(ficha_especial.numero1, ficha_especial.numero2, 
-                                  repr1=ficha_especial.repr1, repr2=ficha_especial.repr2)
+                                  repr1=ficha_especial.repr1, repr2=ficha_especial.repr2,
+                                  es_computadora=True)
             )
             
             # Encontrar la zona de arriba y reemplazarla
@@ -779,13 +785,15 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
             # Determinar si es una ficha doble
             es_doble = ficha_especial.numero1 == ficha_especial.numero2
             
-            # Crear nueva ficha visual
+            # Crear nueva ficha visual con borde café (es_computadora=True)
             ficha_visual = (
                 crear_ficha_visual_horizontal(ficha_especial.numero1, ficha_especial.numero2, 
-                                             repr1=ficha_especial.repr1, repr2=ficha_especial.repr2)
+                                             repr1=ficha_especial.repr1, repr2=ficha_especial.repr2,
+                                             es_computadora=True)
                 if es_doble else
                 crear_ficha_visual(ficha_especial.numero1, ficha_especial.numero2, 
-                                  repr1=ficha_especial.repr1, repr2=ficha_especial.repr2)
+                                  repr1=ficha_especial.repr1, repr2=ficha_especial.repr2,
+                                  es_computadora=True)
             )
             
             # Encontrar la zona de abajo y reemplazarla
