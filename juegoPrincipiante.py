@@ -588,6 +588,19 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
     def volver_al_menu_principal_click(e):
         volver_al_menu_principal(page)
 
+    # Función para obtener el mensaje de la ficha inicial según el modo
+    def get_mensaje_ficha_inicial(quien_empieza, ficha, usa_numeros_central):
+        quien_txt = 'Tú empiezas' if quien_empieza == "jugador" else 'La computadora empieza'
+        
+        if usa_numeros_central:
+            # Si el tablero central usa números, mostrar números
+            return f"{quien_txt} con la ficha [{ficha.numero1}-{ficha.numero2}]"
+        else:
+            # Si el tablero central usa colores, mostrar nombres de colores
+            _, nombre_color1 = COLORES_DOMINO[ficha.numero1]
+            _, nombre_color2 = COLORES_DOMINO[ficha.numero2]
+            return f"{quien_txt} con la ficha [{nombre_color1}-{nombre_color2}]"
+
     page.clean()
     page.title = "DOMINO - Principiante"
     page.bgcolor = "#b9b3a7"
@@ -635,7 +648,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         dlg.open = False
         page.update()
 
-    # Mostrar mensaje del modo de juego más compacto
+    # Mostrar mensaje del modo de juego más compacto con nombres de colores si corresponde
     dlg = ft.AlertDialog(
         title=ft.Text(
             "Modo de Juego",
@@ -657,8 +670,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
                     ft.Divider(height=1, color=colors.BLUE_GREY_200),
                     ft.Container(
                         content=ft.Text(
-                            f"{'Tú empiezas' if quien_empieza == 'jugador' else 'La computadora empieza'} "
-                            f"con la ficha [{ficha_central.numero1}-{ficha_central.numero2}]",
+                            get_mensaje_ficha_inicial(quien_empieza, ficha_central, modo_central_numeros),
                             size=14,
                             text_align=ft.TextAlign.CENTER
                         ),
@@ -675,7 +687,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         actions=[
             ft.ElevatedButton(
                 "Entendido",
-                on_click=cerrar_dialogo,  # Cambiado para usar la nueva función
+                on_click=cerrar_dialogo,
                 style=ft.ButtonStyle(
                     color=colors.WHITE,
                     bgcolor=colors.BLUE_400
