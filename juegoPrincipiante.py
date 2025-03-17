@@ -723,83 +723,47 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         dlg.open = False
         e.page.update()
 
-    # Modificar la función para colocar una ficha de la computadora o del pozo
+    # Función para colocar una ficha especial en el tablero
     def colocar_ficha_especial(e=None):
         # Verificar los números actuales del tablero
         numero_arriba = estado_juego.numero_arriba
         numero_abajo = estado_juego.numero_abajo
         
-        # Buscar fichas válidas en las fichas de la computadora
-        fichas_validas_arriba = [f for f in fichas_app if f.numero2 == numero_arriba]
-        fichas_validas_abajo = [f for f in fichas_app if f.numero1 == numero_abajo]
-        
-        # Si no hay fichas válidas en las fichas de la app, buscar en el pozo
-        if not fichas_validas_arriba and not fichas_validas_abajo:
-            fichas_validas_arriba = [f for f in pozo if f.numero2 == numero_arriba]
-            fichas_validas_abajo = [f for f in pozo if f.numero1 == numero_abajo]
-        
-        # Si sigue sin haber fichas válidas, mostrar mensaje y salir
-        if not fichas_validas_arriba and not fichas_validas_abajo:
-            mostrar_mensaje(page, "La computadora no tiene fichas válidas para jugar. Debes continuar tú.")
-            return
-        
-        # Seleccionar aleatoriamente entre arriba o abajo si hay opciones en ambos lados
-        lado_a_jugar = ""
-        ficha_seleccionada = None
-        origen_ficha = ""
-        
-        if fichas_validas_arriba and fichas_validas_abajo:
-            # Ambas opciones disponibles, elegir aleatoriamente
-            if random.random() < 0.5:
-                ficha_seleccionada = random.choice(fichas_validas_arriba)
-                lado_a_jugar = "arriba"
-            else:
-                ficha_seleccionada = random.choice(fichas_validas_abajo)
-                lado_a_jugar = "abajo"
-        elif fichas_validas_arriba:
-            # Solo hay opción arriba
-            ficha_seleccionada = random.choice(fichas_validas_arriba)
+        # Crear una ficha que coincida con alguno de los extremos
+        # Generar un número aleatorio diferente al extremo con el que coincidirá
+        if random.random() < 0.5:  # 50% probabilidad para elegir arriba o abajo
+            # Crear ficha para arriba
+            nuevo_numero = random.choice([n for n in range(10) if n != numero_arriba])
+            ficha_especial = FichaDomino(999, nuevo_numero, numero_arriba)  # ID especial 999
+            # Usar representación del tablero central (es_para_jugador = False)
+            ficha_especial.repr1 = obtener_representacion_forzada(nuevo_numero, False)
+            ficha_especial.repr2 = obtener_representacion_forzada(numero_arriba, False)
             lado_a_jugar = "arriba"
         else:
-            # Solo hay opción abajo
-            ficha_seleccionada = random.choice(fichas_validas_abajo)
+            # Crear ficha para abajo
+            nuevo_numero = random.choice([n for n in range(10) if n != numero_abajo])
+            ficha_especial = FichaDomino(999, numero_abajo, nuevo_numero)  # ID especial 999
+            # Usar representación del tablero central (es_para_jugador = False)
+            ficha_especial.repr1 = obtener_representacion_forzada(numero_abajo, False)
+            ficha_especial.repr2 = obtener_representacion_forzada(nuevo_numero, False)
             lado_a_jugar = "abajo"
-        
-        # Determinar de dónde proviene la ficha
-        if ficha_seleccionada in fichas_app:
-            origen_ficha = "app"
-            fichas_app.remove(ficha_seleccionada)
-            # Actualizar la vista de las fichas de la computadora
-            fichas_app_view.controls = [crear_ficha_visual_horizontal(0, 0, es_computadora=True) for _ in range(len(fichas_app))]
-        else:
-            origen_ficha = "pozo"
-            pozo.remove(ficha_seleccionada)
-            # Actualizar la vista del pozo
-            for control in pozo_view.controls:
-                if isinstance(control, ft.Text):
-                    control.value = f"Pozo ({len(pozo)})"
-                    break
-        
-        # Forzar la representación de la ficha según el modo del tablero
-        ficha_seleccionada.repr1 = obtener_representacion_forzada(ficha_seleccionada.numero1, False)
-        ficha_seleccionada.repr2 = obtener_representacion_forzada(ficha_seleccionada.numero2, False)
         
         # Añadir la ficha al área de juego
         if lado_a_jugar == "arriba":
             # Actualizar el número arriba
-            estado_juego.numero_arriba = ficha_seleccionada.numero1
+            estado_juego.numero_arriba = ficha_especial.numero1
             
             # Determinar si es una ficha doble
-            es_doble = ficha_seleccionada.numero1 == ficha_seleccionada.numero2
+            es_doble = ficha_especial.numero1 == ficha_especial.numero2
             
             # Crear nueva ficha visual con borde café (es_computadora=True)
             ficha_visual = (
-                crear_ficha_visual_horizontal(ficha_seleccionada.numero1, ficha_seleccionada.numero2, 
-                                             repr1=ficha_seleccionada.repr1, repr2=ficha_seleccionada.repr2,
+                crear_ficha_visual_horizontal(ficha_especial.numero1, ficha_especial.numero2, 
+                                             repr1=ficha_especial.repr1, repr2=ficha_especial.repr2,
                                              es_computadora=True)
                 if es_doble else
-                crear_ficha_visual(ficha_seleccionada.numero1, ficha_seleccionada.numero2, 
-                                  repr1=ficha_seleccionada.repr1, repr2=ficha_seleccionada.repr2,
+                crear_ficha_visual(ficha_especial.numero1, ficha_especial.numero2, 
+                                  repr1=ficha_especial.repr1, repr2=ficha_especial.repr2,
                                   es_computadora=True)
             )
             
@@ -816,19 +780,19 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
             
         else:  # lado_a_jugar == "abajo"
             # Actualizar el número abajo
-            estado_juego.numero_abajo = ficha_seleccionada.numero2
+            estado_juego.numero_abajo = ficha_especial.numero2
             
             # Determinar si es una ficha doble
-            es_doble = ficha_seleccionada.numero1 == ficha_seleccionada.numero2
+            es_doble = ficha_especial.numero1 == ficha_especial.numero2
             
             # Crear nueva ficha visual con borde café (es_computadora=True)
             ficha_visual = (
-                crear_ficha_visual_horizontal(ficha_seleccionada.numero1, ficha_seleccionada.numero2, 
-                                             repr1=ficha_seleccionada.repr1, repr2=ficha_seleccionada.repr2,
+                crear_ficha_visual_horizontal(ficha_especial.numero1, ficha_especial.numero2, 
+                                             repr1=ficha_especial.repr1, repr2=ficha_especial.repr2,
                                              es_computadora=True)
                 if es_doble else
-                crear_ficha_visual(ficha_seleccionada.numero1, ficha_seleccionada.numero2, 
-                                  repr1=ficha_seleccionada.repr1, repr2=ficha_seleccionada.repr2,
+                crear_ficha_visual(ficha_especial.numero1, ficha_especial.numero2, 
+                                  repr1=ficha_especial.repr1, repr2=ficha_especial.repr2,
                                   es_computadora=True)
             )
             
@@ -843,9 +807,8 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
                 nueva_zona = crear_zona_destino(page, estado_juego, "abajo", on_ficha_jugada, area_juego, obtener_representacion_forzada)
                 area_juego.controls.append(nueva_zona)
         
-        # Notificar al usuario con un mensaje que indique de dónde se tomó la ficha
-        mensaje = f"La computadora ha jugado una ficha [{ficha_seleccionada.numero1}|{ficha_seleccionada.numero2}] "
-        mensaje += f"tomada del {'pozo' if origen_ficha == 'pozo' else 'mazo de la computadora'}"
+        # Notificar al usuario con un mensaje más general
+        mensaje = "La computadora ha jugado una ficha"
         mostrar_mensaje(page, mensaje)
         page.update()
 
