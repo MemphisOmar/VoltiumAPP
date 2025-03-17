@@ -15,8 +15,8 @@ COLORES_DOMINO = {
     5: (colors.GREEN, "Verde"),
     6: (colors.BLUE, "Azul"),
     7: (colors.PURPLE, "Púrpura"),
-    8: (colors.GREY, "Gris"),  # Corregido a Gris
-    9: (colors.WHITE, "Blanco")  # Corregido a Blanco
+    8: (colors.GREY, "Gris"),  
+    9: (colors.WHITE, "Blanco")  
 }
 
 class FichaDomino:
@@ -256,7 +256,7 @@ def crear_ficha_visual_jugador(ficha, on_drag_complete=None):
         data=ficha  # Almacenar la ficha original como data
     )
 
-def crear_zona_destino(page: ft.Page, estado_juego, posicion, on_ficha_jugada, area_juego):
+def crear_zona_destino(page: ft.Page, estado_juego, posicion, on_ficha_jugada, area_juego, obtener_representacion_forzada=None):
     """Crea una zona donde se pueden soltar las fichas"""
     def on_accept(e):
         ficha = page.get_control(e.src_id).data
@@ -280,11 +280,21 @@ def crear_zona_destino(page: ft.Page, estado_juego, posicion, on_ficha_jugada, a
             # Determinar si es una ficha doble
             es_doble = ficha.numero1 == ficha.numero2
             
+            # Si tenemos la función obtener_representacion_forzada, la usamos para mantener consistencia visual
+            if obtener_representacion_forzada:
+                # Convertir representación para que coincida con el tablero central (es_para_jugador = False)
+                repr1_central = obtener_representacion_forzada(ficha.numero1, False)
+                repr2_central = obtener_representacion_forzada(ficha.numero2, False)
+            else:
+                # Si no tenemos la función, usamos la representación actual de la ficha
+                repr1_central = ficha.repr1
+                repr2_central = ficha.repr2
+            
             # Crear nueva ficha visual según si es doble o no
             if (es_doble):
-                ficha_visual = crear_ficha_visual_horizontal(ficha.numero1, ficha.numero2, repr1=ficha.repr1, repr2=ficha.repr2)
+                ficha_visual = crear_ficha_visual_horizontal(ficha.numero1, ficha.numero2, repr1=repr1_central, repr2=repr2_central)
             else:
-                ficha_visual = crear_ficha_visual(ficha.numero1, ficha.numero2, repr1=ficha.repr1, repr2=ficha.repr2)
+                ficha_visual = crear_ficha_visual(ficha.numero1, ficha.numero2, repr1=repr1_central, repr2=repr2_central)
             
             # Determinar índices y actualizar el área de juego
             if posicion == "arriba":
@@ -295,7 +305,7 @@ def crear_zona_destino(page: ft.Page, estado_juego, posicion, on_ficha_jugada, a
                     # Reemplazar la zona actual con la ficha
                     area_juego.controls[indice_actual] = ficha_visual
                     # Crear nueva zona arriba
-                    nueva_zona = crear_zona_destino(page, estado_juego, "arriba", on_ficha_jugada, area_juego)
+                    nueva_zona = crear_zona_destino(page, estado_juego, "arriba", on_ficha_jugada, area_juego, obtener_representacion_forzada)
                     area_juego.controls.insert(0, nueva_zona)
             else:  # posicion == "abajo"
                 indices_zonas = [i for i, control in enumerate(area_juego.controls) 
@@ -305,7 +315,7 @@ def crear_zona_destino(page: ft.Page, estado_juego, posicion, on_ficha_jugada, a
                     # Reemplazar la zona actual con la ficha
                     area_juego.controls[indice_actual] = ficha_visual
                     # Crear nueva zona abajo
-                    nueva_zona = crear_zona_destino(page, estado_juego, "abajo", on_ficha_jugada, area_juego)
+                    nueva_zona = crear_zona_destino(page, estado_juego, "abajo", on_ficha_jugada, area_juego, obtener_representacion_forzada)
                     area_juego.controls.append(nueva_zona)
             
             page.update()
@@ -464,22 +474,24 @@ def encontrar_ficha_inicial(fichas_jugador, fichas_app):
 
 def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
     # Determinar aleatoriamente el modo de juego
-    modo_maquina_colores = random.choice([True, False])
+    # TRUE: Tablero central con números y jugador con colores
+    # FALSE: Tablero central con colores y jugador con números
+    modo_central_numeros = random.choice([True, False])
     
     # Definir el mensaje según el modo
-    modo_mensaje = ("Jugarás con números y la máquina con colores" 
-                   if modo_maquina_colores else 
-                   "Jugarás con colores y la máquina con números")
+    modo_mensaje = ("El tablero central mostrará números y tus fichas colores" 
+                   if modo_central_numeros else 
+                   "El tablero central mostrará colores y tus fichas números")
 
     def obtener_representacion_forzada(numero, es_para_jugador):
         """Fuerza la representación según el modo de juego"""
         color, _ = COLORES_DOMINO[numero]
-        if modo_maquina_colores:
-            # Máquina usa colores, jugador usa números
-            return ("color", color) if not es_para_jugador else ("numero", str(numero))
-        else:
-            # Máquina usa números, jugador usa colores
+        if modo_central_numeros:
+            # Centro usa números, jugador usa colores
             return ("numero", str(numero)) if not es_para_jugador else ("color", color)
+        else:
+            # Centro usa colores, jugador usa números
+            return ("color", color) if not es_para_jugador else ("numero", str(numero))
 
     def convertir_fichas_segun_modo(fichas, es_para_jugador):
         """Convierte todas las fichas al modo correspondiente"""
@@ -633,7 +645,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
             # Crear ficha para arriba
             nuevo_numero = random.choice([n for n in range(10) if n != numero_arriba])
             ficha_especial = FichaDomino(999, nuevo_numero, numero_arriba)  # ID especial 999
-            # Usar representación opuesta a la del jugador (es_para_jugador = False)
+            # Usar representación del tablero central (es_para_jugador = False)
             ficha_especial.repr1 = obtener_representacion_forzada(nuevo_numero, False)
             ficha_especial.repr2 = obtener_representacion_forzada(numero_arriba, False)
             lado_a_jugar = "arriba"
@@ -641,7 +653,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
             # Crear ficha para abajo
             nuevo_numero = random.choice([n for n in range(10) if n != numero_abajo])
             ficha_especial = FichaDomino(999, numero_abajo, nuevo_numero)  # ID especial 999
-            # Usar representación opuesta a la del jugador (es_para_jugador = False)
+            # Usar representación del tablero central (es_para_jugador = False)
             ficha_especial.repr1 = obtener_representacion_forzada(numero_abajo, False)
             ficha_especial.repr2 = obtener_representacion_forzada(nuevo_numero, False)
             lado_a_jugar = "abajo"
@@ -671,7 +683,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
                 # Reemplazar la zona actual con la ficha
                 area_juego.controls[indice_actual] = ficha_visual
                 # Crear nueva zona arriba
-                nueva_zona = crear_zona_destino(page, estado_juego, "arriba", on_ficha_jugada, area_juego)
+                nueva_zona = crear_zona_destino(page, estado_juego, "arriba", on_ficha_jugada, area_juego, obtener_representacion_forzada)
                 area_juego.controls.insert(0, nueva_zona)
             
         else:  # lado_a_jugar == "abajo"
@@ -698,7 +710,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
                 # Reemplazar la zona actual con la ficha
                 area_juego.controls[indice_actual] = ficha_visual
                 # Crear nueva zona abajo
-                nueva_zona = crear_zona_destino(page, estado_juego, "abajo", on_ficha_jugada, area_juego)
+                nueva_zona = crear_zona_destino(page, estado_juego, "abajo", on_ficha_jugada, area_juego, obtener_representacion_forzada)
                 area_juego.controls.append(nueva_zona)
         
         # Notificar al usuario con un mensaje más general
@@ -716,8 +728,8 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
     )
 
     # Crear las zonas de destino y configurar área de juego inicial
-    zona_arriba = crear_zona_destino(page, estado_juego, "arriba", on_ficha_jugada, area_juego)
-    zona_abajo = crear_zona_destino(page, estado_juego, "abajo", on_ficha_jugada, area_juego)
+    zona_arriba = crear_zona_destino(page, estado_juego, "arriba", on_ficha_jugada, area_juego, obtener_representacion_forzada)
+    zona_abajo = crear_zona_destino(page, estado_juego, "abajo", on_ficha_jugada, area_juego, obtener_representacion_forzada)
     
     # Determinar si la ficha central es doble
     es_ficha_central_doble = ficha_central.numero1 == ficha_central.numero2
@@ -811,4 +823,5 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
     )
 
     page.update()
+
 
