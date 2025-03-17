@@ -73,25 +73,43 @@ def repartir_fichas():
     Reparte las fichas entre jugador, aplicación y pozo
     """
     global fichas_disponibles
+    # Asegurarnos de que las fichas estén inicializadas
     if not fichas_disponibles:
         fichas_disponibles = crear_fichas_domino()
     
-    # Repartir 7 fichas para el jugador (cambiado de 8 a 7)
+    # Crear una copia de las fichas disponibles para manipular
+    fichas_temp = fichas_disponibles.copy()
+    
+    # Repartir 7 fichas para el jugador
     fichas_jugador = []
     for _ in range(7):
-        ficha = random.choice(fichas_disponibles)
+        if not fichas_temp:  # Si se acabaron las fichas, crear nuevas
+            fichas_temp = crear_fichas_domino()
+        ficha = random.choice(fichas_temp)
         fichas_jugador.append(ficha)
-        fichas_disponibles.remove(ficha)
+        fichas_temp.remove(ficha)
     
     # Repartir 7 fichas para la aplicación
     fichas_app = []
     for _ in range(7):
-        ficha = random.choice(fichas_disponibles)
+        if not fichas_temp:  # Si se acabaron las fichas, crear nuevas
+            fichas_temp = crear_fichas_domino()
+        ficha = random.choice(fichas_temp)
         fichas_app.append(ficha)
-        fichas_disponibles.remove(ficha)
+        fichas_temp.remove(ficha)
     
     # Las fichas restantes serán el pozo
-    pozo = fichas_disponibles.copy()
+    pozo = fichas_temp.copy() if fichas_temp else []
+    
+    # Si el pozo está vacío, crear algunas fichas adicionales
+    if not pozo:
+        pozo_adicional = crear_fichas_domino()
+        # Eliminar las fichas que ya tiene el jugador o la aplicación
+        ids_asignados = [f.identificador for f in fichas_jugador + fichas_app]
+        pozo = [f for f in pozo_adicional if f.identificador not in ids_asignados]
+    
+    # Actualizar las fichas disponibles globales (quitar las que se repartieron)
+    fichas_disponibles = pozo.copy()
     
     return fichas_jugador, fichas_app, pozo
 
@@ -823,10 +841,11 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
 
     # Botón renombrado para hacer jugar al oponente - reducido
     boton_jugar_oponente = ft.ElevatedButton(
-        text="Hacer jugar al oponente",  # Texto cambiado
+        text="Jugar oponente",  # Texto simplificado para que quepa en una línea
+        tooltip="Hacer jugar al oponente",  # Tooltip con el texto completo
         on_click=colocar_ficha_especial,
-        width=120,  # Reducido de 200 a 120
-        height=40,  # Reducido de 50 a 40
+        width=120,  # Mantenemos el ancho reducido
+        height=40,  # Mantenemos la altura reducida
         style=ft.ButtonStyle(
             color=colors.WHITE,
             bgcolor=colors.BLUE_700
