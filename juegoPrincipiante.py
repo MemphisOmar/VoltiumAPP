@@ -487,8 +487,19 @@ def crear_pozo_column(fichas, on_ficha_seleccionada, fichas_jugador=None, fichas
     def actualizar_vista_pozo():
         """Actualiza el contador y las fichas visuales del pozo"""
         texto_pozo.value = f"Pozo ({len(fichas)})"
-        if len(columna_fichas.controls) > len(fichas):
-            columna_fichas.controls.pop()
+        # Recrear los controles de la columna para reflejar el estado actual del pozo
+        columna_fichas.controls = [
+            ft.Container(
+                width=80,
+                height=140,
+                bgcolor=colors.BROWN,
+                border_radius=5,
+                border=ft.border.all(1, colors.BLACK),
+                margin=ft.margin.only(bottom=5),
+                on_click=lambda e, f=ficha: on_ficha_click(e, f)
+            ) 
+            for ficha in fichas
+        ]
 
     def on_ficha_click(e, ficha):
         if ficha in fichas:
@@ -515,17 +526,22 @@ def crear_pozo_column(fichas, on_ficha_seleccionada, fichas_jugador=None, fichas
         height=600  # Altura fija para la columna de fichas
     )
     
+    contenedor_columna = ft.Container(
+        content=columna_fichas,
+        width=120,  # Ancho fijo para el contenedor
+        height=600,  # Aumentado de 300 a 600
+        border=ft.border.all(1, colors.GREY_400),
+        border_radius=5,
+        padding=10
+    )
+    
+    # Exportar la función de actualización para que sea accesible desde fuera
+    contenedor_columna.actualizar = actualizar_vista_pozo
+    
     return ft.Column(
         controls=[
             texto_pozo,
-            ft.Container(
-                content=columna_fichas,
-                width=120,  # Ancho fijo para el contenedor
-                height=600,  # Aumentado de 300 a 600
-                border=ft.border.all(1, colors.GREY_400),
-                border_radius=5,
-                padding=10
-            )
+            contenedor_columna
         ],
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         spacing=5,
@@ -785,86 +801,155 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         numero_arriba = estado_juego.numero_arriba
         numero_abajo = estado_juego.numero_abajo
         
-        # Crear una ficha que coincida con alguno de los extremos
-        # Generar un número aleatorio diferente al extremo con el que coincidirá
-        if random.random() < 0.5:  # 50% probabilidad para elegir arriba o abajo
-            # Crear ficha para arriba
-            nuevo_numero = random.choice([n for n in range(10) if n != numero_arriba])
-            ficha_especial = FichaDomino(999, nuevo_numero, numero_arriba)  # ID especial 999
-            # Usar representación del tablero central (es_para_jugador = False)
-            ficha_especial.repr1 = obtener_representacion_forzada(nuevo_numero, False)
-            ficha_especial.repr2 = obtener_representacion_forzada(numero_arriba, False)
+        # Buscar fichas jugables entre las del oponente y el pozo
+        fichas_jugables_arriba = []
+        fichas_jugables_abajo = []
+        
+        # Verificar fichas del oponente primero (prioridad)
+        for ficha in fichas_app:
+            # Verificar si alguno de los lados de la ficha coincide con los extremos del tablero
+            if ficha.numero1 == numero_arriba or ficha.numero2 == numero_arriba:
+                fichas_jugables_arriba.append((ficha, "app"))
+            if ficha.numero1 == numero_abajo or ficha.numero2 == numero_abajo:
+                fichas_jugables_abajo.append((ficha, "app"))
+        
+        # Verificar fichas del pozo
+        for ficha in pozo:
+            if ficha.numero1 == numero_arriba or ficha.numero2 == numero_arriba:
+                fichas_jugables_arriba.append((ficha, "pozo"))
+            if ficha.numero1 == numero_abajo or ficha.numero2 == numero_abajo:
+                fichas_jugables_abajo.append((ficha, "pozo"))
+        
+        # Todas las fichas jugables
+        todas_fichas_jugables = fichas_jugables_arriba + fichas_jugables_abajo
+        
+        if not todas_fichas_jugables:
+            # No hay fichas jugables, mostrar mensaje e intentar tomar del pozo
+            if pozo:
+                # Hay fichas en el pozo, tomar una
+                ficha_nueva = pozo.pop(0)  # Tomar la primera ficha
+                fichas_app.append(ficha_nueva)  # Añadirla al oponente
+                # Actualizar las vistas
+                fichas_app_view.controls.append(
+                    ft.Container(
+                        width=60,
+                        height=120,
+                        bgcolor=colors.BROWN,
+                        border_radius=5
+                    )
+                )
+                # Actualizar la vista del pozo
+                for container in pozo_view.controls:
+                    if hasattr(container, 'actualizar'):
+                        container.actualizar()
+                
+                mensaje = "La computadora ha tomado una ficha del pozo"
+                mostrar_mensaje(page, mensaje)
+                page.update()
+                return
+            else:
+                # No hay fichas en el pozo, el oponente pasa
+                mensaje = "La computadora no tiene fichas para jugar y el pozo está vacío. Pasa."
+                mostrar_mensaje(page, mensaje)
+                return
+        
+        # Elegir una ficha aleatoria entre las jugables
+        ficha_elegida, origen = random.choice(todas_fichas_jugables)
+        
+        # Determinar si la ficha va arriba o abajo
+        if (ficha_elegida, origen) in fichas_jugables_arriba:
             lado_a_jugar = "arriba"
-        else:
-            # Crear ficha para abajo
-            nuevo_numero = random.choice([n for n in range(10) if n != numero_abajo])
-            ficha_especial = FichaDomino(999, numero_abajo, nuevo_numero)  # ID especial 999
-            # Usar representación del tablero central (es_para_jugador = False)
-            ficha_especial.repr1 = obtener_representacion_forzada(numero_abajo, False)
-            ficha_especial.repr2 = obtener_representacion_forzada(nuevo_numero, False)
+            # Orientar la ficha correctamente para que coincida con el extremo superior
+            if ficha_elegida.numero1 == numero_arriba:
+                # Rotar la ficha para que numero2 coincida con el extremo
+                ficha_elegida.numero1, ficha_elegida.numero2 = ficha_elegida.numero2, ficha_elegida.numero1
+                ficha_elegida.repr1, ficha_elegida.repr2 = ficha_elegida.repr2, ficha_elegida.repr1
+            # Actualizar el número arriba
+            estado_juego.numero_arriba = ficha_elegida.numero1
+        else:  # va abajo
             lado_a_jugar = "abajo"
+            # Orientar la ficha correctamente para que coincida con el extremo inferior
+            if ficha_elegida.numero2 == numero_abajo:
+                # Rotar la ficha para que numero1 coincida con el extremo
+                ficha_elegida.numero1, ficha_elegida.numero2 = ficha_elegida.numero2, ficha_elegida.numero1
+                ficha_elegida.repr1, ficha_elegida.repr2 = ficha_elegida.repr2, ficha_elegida.repr1
+            # Actualizar el número abajo
+            estado_juego.numero_abajo = ficha_elegida.numero2
+        
+        # Eliminar la ficha de su origen
+        if origen == "app":
+            fichas_app.remove(ficha_elegida)
+            # Actualizar la vista de fichas de la aplicación si todavía tiene fichas
+            if fichas_app_view.controls:
+                fichas_app_view.controls.pop()
+        else:  # origen == "pozo"
+            pozo.remove(ficha_elegida)
+            # Actualizar la vista del pozo
+            for container in pozo_view.controls:
+                if hasattr(container, 'actualizar'):
+                    container.actualizar()
+        
+        # Asegurar que la ficha tenga la representación visual correcta para el tablero
+        ficha_elegida.repr1 = obtener_representacion_forzada(ficha_elegida.numero1, False)
+        ficha_elegida.repr2 = obtener_representacion_forzada(ficha_elegida.numero2, False)
+        
+        # Determinar si es una ficha doble
+        es_doble = ficha_elegida.numero1 == ficha_elegida.numero2
+        
+        # Crear nueva ficha visual con borde café (es_computadora=True)
+        ficha_visual = (
+            crear_ficha_visual_horizontal(ficha_elegida.numero1, ficha_elegida.numero2, 
+                                         repr1=ficha_elegida.repr1, repr2=ficha_elegida.repr2,
+                                         es_computadora=True)
+            if es_doble else
+            crear_ficha_visual(ficha_elegida.numero1, ficha_elegida.numero2, 
+                              repr1=ficha_elegida.repr1, repr2=ficha_elegida.repr2,
+                              es_computadora=True)
+        )
         
         # Añadir la ficha al área de juego
         if lado_a_jugar == "arriba":
-            # Actualizar el número arriba
-            estado_juego.numero_arriba = ficha_especial.numero1
-            
-            # Determinar si es una ficha doble
-            es_doble = ficha_especial.numero1 == ficha_especial.numero2
-            
-            # Crear nueva ficha visual con borde café (es_computadora=True)
-            ficha_visual = (
-                crear_ficha_visual_horizontal(ficha_especial.numero1, ficha_especial.numero2, 
-                                             repr1=ficha_especial.repr1, repr2=ficha_especial.repr2,
-                                             es_computadora=True)
-                if es_doble else
-                crear_ficha_visual(ficha_especial.numero1, ficha_especial.numero2, 
-                                  repr1=ficha_especial.repr1, repr2=ficha_especial.repr2,
-                                  es_computadora=True)
-            )
-            
             # Encontrar la zona de arriba y reemplazarla
             indices_zonas = [i for i, control in enumerate(area_juego.controls) 
                             if isinstance(control, ft.DragTarget)]
-            if indices_zonas:
+            if indices_zonas:  # Verificar que haya zonas disponibles
                 indice_actual = indices_zonas[0]
                 # Reemplazar la zona actual con la ficha
                 area_juego.controls[indice_actual] = ficha_visual
                 # Crear nueva zona arriba
                 nueva_zona = crear_zona_destino(page, estado_juego, "arriba", on_ficha_jugada, area_juego, obtener_representacion_forzada)
                 area_juego.controls.insert(0, nueva_zona)
+            else:
+                # No hay zonas disponibles, mostrar error
+                mensaje = "Error: No hay zonas disponibles para colocar la ficha"
+                mostrar_mensaje(page, mensaje)
+                return
             
         else:  # lado_a_jugar == "abajo"
-            # Actualizar el número abajo
-            estado_juego.numero_abajo = ficha_especial.numero2
-            
-            # Determinar si es una ficha doble
-            es_doble = ficha_especial.numero1 == ficha_especial.numero2
-            
-            # Crear nueva ficha visual con borde café (es_computadora=True)
-            ficha_visual = (
-                crear_ficha_visual_horizontal(ficha_especial.numero1, ficha_especial.numero2, 
-                                             repr1=ficha_especial.repr1, repr2=ficha_especial.repr2,
-                                             es_computadora=True)
-                if es_doble else
-                crear_ficha_visual(ficha_especial.numero1, ficha_especial.numero2, 
-                                  repr1=ficha_especial.repr1, repr2=ficha_especial.repr2,
-                                  es_computadora=True)
-            )
-            
             # Encontrar la zona de abajo y reemplazarla
             indices_zonas = [i for i, control in enumerate(area_juego.controls) 
                             if isinstance(control, ft.DragTarget)]
-            if indices_zonas:
+            if indices_zonas:  # Verificar que haya zonas disponibles
                 indice_actual = indices_zonas[-1]
                 # Reemplazar la zona actual con la ficha
                 area_juego.controls[indice_actual] = ficha_visual
                 # Crear nueva zona abajo
                 nueva_zona = crear_zona_destino(page, estado_juego, "abajo", on_ficha_jugada, area_juego, obtener_representacion_forzada)
                 area_juego.controls.append(nueva_zona)
+            else:
+                # No hay zonas disponibles, mostrar error
+                mensaje = "Error: No hay zonas disponibles para colocar la ficha"
+                mostrar_mensaje(page, mensaje)
+                return
         
-        # Notificar al usuario con un mensaje más general
-        mensaje = "La computadora ha jugado una ficha"
+        # Verificar si el oponente se quedó sin fichas (ganó)
+        if len(fichas_app) == 0:
+            mensaje = "¡La computadora ha ganado!"
+            mostrar_mensaje(page, mensaje)
+        
+        # Actualizar la información en pantalla
+        origen_texto = "el pozo" if origen == "pozo" else "su mano"
+        mensaje = f"La computadora ha jugado una ficha de {origen_texto}"
         mostrar_mensaje(page, mensaje)
         page.update()
 
