@@ -580,6 +580,9 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
                    if modo_central_numeros else 
                    "El tablero central mostrará colores y tus fichas números")
 
+    # Factor de escala para el zoom (nuevo)
+    escala_actual = 1.0
+
     def obtener_representacion_forzada(numero, es_para_jugador):
         """Fuerza la representación según el modo de juego"""
         color, _ = COLORES_DOMINO[numero]
@@ -750,6 +753,31 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
     def cerrar_mensaje(e, dlg):
         dlg.open = False
         e.page.update()
+    
+    # Funciones para el zoom (nuevas)
+    def aumentar_zoom(e):
+        nonlocal escala_actual
+        if escala_actual < 2.0:  # Limitamos el zoom máximo a 2.0
+            escala_actual += 0.1
+            actualizar_zoom()
+            
+    def disminuir_zoom(e):
+        nonlocal escala_actual
+        if escala_actual > 0.5:  # Limitamos el zoom mínimo a 0.5
+            escala_actual -= 0.1
+            actualizar_zoom()
+            
+    def restablecer_zoom(e):
+        nonlocal escala_actual
+        escala_actual = 1.0
+        actualizar_zoom()
+        
+    def actualizar_zoom():
+        # Aplicamos la escala al contenedor del área de juego
+        contenedor_area_juego.scale = escala_actual
+        # Actualizamos el texto que muestra la escala actual
+        texto_zoom.value = f"{int(escala_actual * 100)}%"
+        page.update()
 
     # Función para colocar una ficha especial en el tablero
     def colocar_ficha_especial(e=None):
@@ -870,6 +898,48 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         zona_abajo
     ]
 
+    # Crear contenedores para el zoom (nuevo)
+    contenedor_area_juego = ft.Container(
+        content=area_juego,
+        height=350,  # Reducido para coincidir con area_juego
+        border=ft.border.all(1, colors.GREY_400),
+        border_radius=5,
+        padding=5,  # Reducido de 10 a 5
+        scale=escala_actual,  # Factor de escala inicial
+        alignment=ft.alignment.center  # Centrar el contenido cuando se hace zoom
+    )
+    
+    # Controles para el zoom (nuevo)
+    texto_zoom = ft.Text("100%", size=14, weight=ft.FontWeight.BOLD)
+    
+    boton_aumentar = ft.IconButton(
+        icon=ft.icons.ZOOM_IN,
+        tooltip="Aumentar zoom",
+        on_click=aumentar_zoom,
+        icon_color=colors.BLUE_700,
+    )
+    
+    boton_disminuir = ft.IconButton(
+        icon=ft.icons.ZOOM_OUT,
+        tooltip="Disminuir zoom",
+        on_click=disminuir_zoom,
+        icon_color=colors.BLUE_700,
+    )
+    
+    boton_restablecer = ft.IconButton(
+        icon=ft.icons.ZOOM_OUT_MAP,
+        tooltip="Restablecer zoom",
+        on_click=restablecer_zoom,
+        icon_color=colors.BLUE_700,
+    )
+    
+    # Barra de control del zoom (nuevo)
+    controles_zoom = ft.Row(
+        [boton_disminuir, texto_zoom, boton_aumentar, boton_restablecer],
+        alignment=ft.MainAxisAlignment.CENTER,
+        spacing=5,
+    )
+
     # Crear las vistas
     fichas_jugador_view = crear_fichas_jugador_row(fichas_jugador, estado_juego, page)
     fichas_app_view = crear_fichas_app_row(len(fichas_app))
@@ -920,13 +990,10 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
                                     alignment=ft.alignment.center,
                                     padding=5,
                                 ),
-                                ft.Container(
-                                    content=area_juego,
-                                    height=350,  # Reducido para coincidir con area_juego
-                                    border=ft.border.all(1, colors.GREY_400),
-                                    border_radius=5,
-                                    padding=5,  # Reducido de 10 a 5
-                                ),
+                                # Reemplazar el contenedor del área de juego con el nuevo que tiene zoom
+                                contenedor_area_juego,
+                                # Añadir la barra de controles de zoom
+                                controles_zoom,
                                 ft.Container(
                                     content=fichas_jugador_view,
                                     padding=2,
