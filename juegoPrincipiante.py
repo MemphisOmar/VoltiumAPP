@@ -735,12 +735,40 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
     page.dialog = dlg
     dlg.open = True
 
+    def calcular_zoom_automatico(area_juego):
+        """Calcula el factor de zoom basado en el número de fichas en el tablero"""
+        num_fichas = len([c for c in area_juego.controls if not isinstance(c, ft.DragTarget)])
+        
+        # Base el zoom en el número de fichas
+        # Comenzamos con zoom 1.0 para 1-3 fichas
+        # Reducimos gradualmente conforme aumentan las fichas
+        if num_fichas <= 3:
+            return 1.0
+        elif num_fichas <= 6:
+            return 0.9
+        elif num_fichas <= 9:
+            return 0.8
+        elif num_fichas <= 12:
+            return 0.7
+        else:
+            return 0.6
+
+    def actualizar_zoom_automatico(area_juego, contenedor_area_juego, texto_zoom):
+        """Actualiza el zoom basado en el número de fichas"""
+        nuevo_zoom = calcular_zoom_automatico(area_juego)
+        contenedor_area_juego.scale = nuevo_zoom
+        texto_zoom.value = f"{int(nuevo_zoom * 100)}%"
+        contenedor_area_juego.page.update()
+
     def on_ficha_jugada(ficha, lado):
         # Remover la ficha jugada de la mano del jugador
         for control in fichas_jugador_view.controls[:]:
             if control.data.identificador == ficha.identificador:
                 fichas_jugador_view.controls.remove(control)
                 break
+        
+        # Actualizar el zoom automáticamente
+        actualizar_zoom_automatico(area_juego, contenedor_area_juego, texto_zoom)
         page.update()
 
     def agregar_ficha_del_pozo(ficha):
@@ -951,6 +979,9 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         origen_texto = "el pozo" if origen == "pozo" else "su mano"
         mensaje = f"La computadora ha jugado una ficha de {origen_texto}"
         mostrar_mensaje(page, mensaje)
+        
+        # Justo antes del page.update() final, agregar:
+        actualizar_zoom_automatico(area_juego, contenedor_area_juego, texto_zoom)
         page.update()
 
     # Área de juego central scrolleable - altura reducida
@@ -997,30 +1028,10 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
     # Controles para el zoom (nuevo)
     texto_zoom = ft.Text("100%", size=14, weight=ft.FontWeight.BOLD)
     
-    boton_aumentar = ft.IconButton(
-        icon=ft.icons.ZOOM_IN,
-        tooltip="Aumentar zoom",
-        on_click=aumentar_zoom,
-        icon_color=colors.BLUE_700,
-    )
-    
-    boton_disminuir = ft.IconButton(
-        icon=ft.icons.ZOOM_OUT,
-        tooltip="Disminuir zoom",
-        on_click=disminuir_zoom,
-        icon_color=colors.BLUE_700,
-    )
-    
-    boton_restablecer = ft.IconButton(
-        icon=ft.icons.ZOOM_OUT_MAP,
-        tooltip="Restablecer zoom",
-        on_click=restablecer_zoom,
-        icon_color=colors.BLUE_700,
-    )
-    
-    # Barra de control del zoom (nuevo)
+    # Modificar la sección donde se crean los controles de zoom
+    # Eliminar los botones de zoom manual y dejar solo el indicador
     controles_zoom = ft.Row(
-        [boton_disminuir, texto_zoom, boton_aumentar, boton_restablecer],
+        [texto_zoom],
         alignment=ft.MainAxisAlignment.CENTER,
         spacing=5,
     )
@@ -1103,6 +1114,9 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         )
     )
 
+    # En la configuración inicial del juego, después de crear el área de juego
+    # Establecer el zoom inicial
+    actualizar_zoom_automatico(area_juego, contenedor_area_juego, texto_zoom)
     page.update()
 
 
