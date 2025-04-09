@@ -210,7 +210,7 @@ def crear_ficha_visual(numero1, numero2, es_central=False, repr1=None, repr2=Non
 
 # Añadir el mismo parámetro para la versión horizontal
 def crear_ficha_visual_horizontal(numero1, numero2, es_central=False, repr1=None, repr2=None, es_computadora=False):
-    """Crea una ficha visual horizontal con línea divisoria perfectamente centrada"""
+    """Crea una ficha visual en orientación horizontal"""
     color_fondo = colors.BLUE_GREY_100 if es_central else colors.WHITE
     color_borde = colors.BROWN if es_computadora else colors.BLACK
     
@@ -220,44 +220,34 @@ def crear_ficha_visual_horizontal(numero1, numero2, es_central=False, repr1=None
     tipo1, _ = repr1
     tipo2, _ = repr2
     
-    # Crear un único contenedor con una imagen que tiene una línea vertical exactamente en el centro
-    # La imagen de fondo será un rectángulo divido en dos partes iguales
-    
-    # 1. Creamos un contenedor base con el color del borde
-    contenedor_exterior = ft.Container(
-        width=90,   # Ancho total
-        height=44,  # Alto total incluido el borde
+    return ft.Container(
+        content=ft.Row(
+            controls=[
+                ft.Container(
+                    content=crear_contenido_ficha(repr1),
+                    alignment=ft.alignment.center,
+                    bgcolor=color_fondo if tipo1 == "numero" else None,
+                    width=40,
+                    height=40,
+                    border=ft.border.all(1, color_borde) if tipo1 == "numero" else None
+                ),
+                ft.Container(
+                    content=crear_contenido_ficha(repr2),
+                    alignment=ft.alignment.center,
+                    bgcolor=color_fondo if tipo2 == "numero" else None,
+                    width=40,
+                    height=40,
+                    border=ft.border.all(1, color_borde) if tipo2 == "numero" else None
+                )
+            ],
+            spacing=1,
+            alignment=ft.MainAxisAlignment.CENTER,
+        ),
         bgcolor=color_borde,
-        padding=2,  # Padding uniforme
-        border_radius=5
+        padding=1,
+        border_radius=5,
+        width=82
     )
-    
-    # 2. Creamos dos mitades exactamente iguales
-    mitad_izquierda = ft.Container(
-        width=43,
-        height=40,
-        bgcolor=color_fondo if tipo1 == "numero" else None,
-        content=crear_contenido_ficha(repr1),
-        alignment=ft.alignment.center
-    )
-    
-    mitad_derecha = ft.Container(
-        width=43,
-        height=40, 
-        bgcolor=color_fondo if tipo2 == "numero" else None,
-        content=crear_contenido_ficha(repr2),
-        alignment=ft.alignment.center
-    )
-    
-    # 3. Las colocamos en un Row con espaciado exacramente de 0 píxeles
-    contenedor_exterior.content = ft.Row(
-        controls=[mitad_izquierda, mitad_derecha],
-        spacing=0,
-        tight=True,  # Esto evita cualquier espaciado automático
-        alignment=ft.MainAxisAlignment.CENTER
-    )
-    
-    return contenedor_exterior
 
 def crear_ficha_visual_jugador(ficha, on_drag_complete=None):
     """Crea una ficha visual arrastrable para el jugador con botón de rotación"""
@@ -498,17 +488,17 @@ def crear_pozo_column(fichas, on_ficha_seleccionada, fichas_jugador=None, fichas
         ],
         spacing=2,
         scroll=ft.ScrollMode.AUTO,
-        height=600  # Reducido de 800 a 600
+        height=800
     )
     
     contenedor_columna = ft.Container(
         content=columna_fichas,
         width=84,
-        height=400,  # Reducido de 500 a 400
+        height=600,
         border=ft.border.all(1, colors.GREY_400),
         border_radius=5,
         padding=7,
-        bgcolor="#2A8A68"  # Cambiado de "#1B4D3E" a un verde más claro
+        bgcolor="#1B4D3E"
     )
     
     contenedor_columna.actualizar = actualizar_vista_pozo
@@ -565,7 +555,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
                    if modo_central_numeros else 
                    "El tablero central mostrará colores y tus fichas números")
 
-    escala_actual = 0.8
+    escala_actual = 1.0
 
     def obtener_representacion_forzada(numero, es_para_jugador):
         color, _ = COLORES_DOMINO[numero]
@@ -597,7 +587,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
 
     page.clean()
     page.title = "DOMINO - Principiante"
-    page.bgcolor = "#2A8A68"  # Cambiado de "#1B4D3E" a un verde más claro
+    page.bgcolor = "#1B4D3E"
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.window_width = 720
@@ -690,15 +680,15 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         num_fichas = len([c for c in area_juego.controls if not isinstance(c, ft.DragTarget)])
         
         if num_fichas <= 3:
-            return 0.8  # Reducido de 0.95 a 0.8
+            return 0.95
         elif num_fichas <= 6:
-            return 0.6  # Reducido de 0.7 a 0.6
+            return 0.7
         elif num_fichas <= 9:
-            return 0.45  # Reducido de 0.55 a 0.45
+            return 0.55
         elif num_fichas <= 12:
-            return 0.35  # Reducido de 0.40 a 0.35
+            return 0.40
         else:
-            return 0.3  # Reducido de 0.6 a 0.3
+            return 0.6
 
     def actualizar_zoom_automatico(area_juego, contenedor_area_juego, texto_zoom):
         nuevo_zoom = calcular_zoom_automatico(area_juego)
@@ -918,7 +908,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         alignment=ft.MainAxisAlignment.CENTER,
         spacing=5,
         scroll=ft.ScrollMode.AUTO,
-        height=450,  # Reducido de 550 a 450
+        height=700,
     )
 
     zona_arriba = crear_zona_destino(page, estado_juego, "arriba", on_ficha_jugada, area_juego, obtener_representacion_forzada)
@@ -940,13 +930,13 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
 
     contenedor_area_juego = ft.Container(
         content=area_juego,
-        height=400,  # Reducido de 500 a 400
+        height=600,
         border=ft.border.all(1, colors.GREY_400),
         border_radius=5,
         padding=5,
         scale=escala_actual,
         alignment=ft.alignment.center,
-        bgcolor="#2A8A68"  # Cambiado de "#1B4D3E" a un verde más claro
+        bgcolor="#1B4D3E"  
     )
     
     texto_zoom = ft.Text("100%", size=14, weight=ft.FontWeight.BOLD)
@@ -1009,7 +999,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
                                 ft.Container(
                                     content=fichas_jugador_view,
                                     padding=2,
-                                    height=200,  # Aumentado de 180 a 200 para dar más espacio a las fichas del jugador
+                                    height=150,
                                 ),
                             ],
                             alignment=ft.MainAxisAlignment.START,
