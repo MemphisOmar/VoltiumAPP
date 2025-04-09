@@ -1014,15 +1014,15 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         zona_abajo
     ]
 
-    # Crear contenedores para el zoom (nuevo)
     contenedor_area_juego = ft.Container(
         content=area_juego,
-        height=350,  # Reducido para coincidir con area_juego
+        height=450,
         border=ft.border.all(1, colors.GREY_400),
-        border_radius=5,
-        padding=5,  # Reducido de 10 a 5
-        scale=escala_actual,  # Factor de escala inicial
-        alignment=ft.alignment.center  # Centrar el contenido cuando se hace zoom
+        border_radius=3,
+        padding=3,
+        scale=escala_actual,
+        alignment=ft.alignment.center,
+        bgcolor="#1B4D3E"  
     )
     
     # Controles para el zoom (nuevo)
