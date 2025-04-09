@@ -844,127 +844,45 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         fichas_jugables_arriba = []
         fichas_jugables_abajo = []
         
-        # Verificar si la computadora tiene fichas que puedan jugarse
         for ficha in fichas_app:
             if ficha.numero1 == numero_arriba or ficha.numero2 == numero_arriba:
                 fichas_jugables_arriba.append((ficha, "app"))
             if ficha.numero1 == numero_abajo or ficha.numero2 == numero_abajo:
                 fichas_jugables_abajo.append((ficha, "app"))
         
+        for ficha in pozo:
+            if ficha.numero1 == numero_arriba or ficha.numero2 == numero_arriba:
+                fichas_jugables_arriba.append((ficha, "pozo"))
+            if ficha.numero1 == numero_abajo or ficha.numero2 == numero_abajo:
+                fichas_jugables_abajo.append((ficha, "pozo"))
+        
         todas_fichas_jugables = fichas_jugables_arriba + fichas_jugables_abajo
         
-        # Si la computadora no tiene fichas jugables, buscar en el pozo
         if not todas_fichas_jugables:
-            fichas_tomadas = 0
-            ficha_encontrada = False
-            mensaje_final = ""
-            
-            # Intentar tomar fichas del pozo hasta encontrar una jugable o hasta que se acabe el pozo
-            while pozo and not ficha_encontrada:
-                # Tomar una ficha aleatoria del pozo
-                indice_aleatorio = random.randint(0, len(pozo) - 1)
-                ficha_nueva = pozo.pop(indice_aleatorio)
-                fichas_tomadas += 1
-                
-                # Actualizar la vista del pozo
+            if pozo:
+                ficha_nueva = pozo.pop(0)
+                fichas_app.append(ficha_nueva)
+                fichas_app_view.controls.append(
+                    ft.Container(
+                        width=60,
+                        height=120,
+                        bgcolor=colors.BROWN,
+                        border_radius=5
+                    )
+                )
                 for container in pozo_view.controls:
                     if hasattr(container, 'actualizar'):
                         container.actualizar()
                 
-                # Verificar si la ficha tomada se puede jugar
-                if (ficha_nueva.numero1 == numero_arriba or ficha_nueva.numero2 == numero_arriba or
-                    ficha_nueva.numero1 == numero_abajo or ficha_nueva.numero2 == numero_abajo):
-                    # La ficha es jugable
-                    ficha_encontrada = True
-                    
-                    # Determinar en qué lado jugar la ficha
-                    if ficha_nueva.numero1 == numero_arriba or ficha_nueva.numero2 == numero_arriba:
-                        lado_a_jugar = "arriba"
-                        if ficha_nueva.numero1 == numero_arriba:
-                            ficha_nueva.numero1, ficha_nueva.numero2 = ficha_nueva.numero2, ficha_nueva.numero1
-                            ficha_nueva.repr1, ficha_nueva.repr2 = ficha_nueva.repr2, ficha_nueva.repr1
-                        estado_juego.numero_arriba = ficha_nueva.numero1
-                    else:
-                        lado_a_jugar = "abajo"
-                        if ficha_nueva.numero2 == numero_abajo:
-                            ficha_nueva.numero1, ficha_nueva.numero2 = ficha_nueva.numero2, ficha_nueva.numero1
-                            ficha_nueva.repr1, ficha_nueva.repr2 = ficha_nueva.repr2, ficha_nueva.repr1
-                        estado_juego.numero_abajo = ficha_nueva.numero2
-                    
-                    # Actualizar la representación de la ficha jugada según el modo inicial
-                    ficha_nueva.repr1 = obtener_representacion_forzada(ficha_nueva.numero1, False)
-                    ficha_nueva.repr2 = obtener_representacion_forzada(ficha_nueva.numero2, False)
-                    
-                    es_doble = ficha_nueva.numero1 == ficha_nueva.numero2
-                    
-                    ficha_visual = (
-                        crear_ficha_visual_horizontal(ficha_nueva.numero1, ficha_nueva.numero2, 
-                                                      repr1=ficha_nueva.repr1, repr2=ficha_nueva.repr2,
-                                                      es_computadora=True)
-                        if es_doble else
-                        crear_ficha_visual(ficha_nueva.numero1, ficha_nueva.numero2, 
-                                           repr1=ficha_nueva.repr1, repr2=ficha_nueva.repr2,
-                                           es_computadora=True)
-                    )
-                    
-                    # Colocar la ficha en el tablero
-                    if lado_a_jugar == "arriba":
-                        indices_zonas = [i for i, control in enumerate(area_juego.controls) 
-                                        if isinstance(control, ft.DragTarget)]
-                        if indices_zonas:
-                            indice_actual = indices_zonas[0]
-                            area_juego.controls[indice_actual] = ficha_visual
-                            nueva_zona = crear_zona_destino(page, estado_juego, "arriba", on_ficha_jugada, area_juego, obtener_representacion_forzada)
-                            area_juego.controls.insert(0, nueva_zona)
-                    else:
-                        indices_zonas = [i for i, control in enumerate(area_juego.controls) 
-                                        if isinstance(control, ft.DragTarget)]
-                        if indices_zonas:
-                            indice_actual = indices_zonas[-1]
-                            area_juego.controls[indice_actual] = ficha_visual
-                            nueva_zona = crear_zona_destino(page, estado_juego, "abajo", on_ficha_jugada, area_juego, obtener_representacion_forzada)
-                            area_juego.controls.append(nueva_zona)
-                    
-                    mensaje_final = f"La computadora tomó {fichas_tomadas} ficha(s) del pozo y jugó una"
-                else:
-                    # La ficha no es jugable, añadirla a las fichas de la computadora
-                    fichas_app.append(ficha_nueva)
-                    fichas_app_view.controls.append(
-                        ft.Container(
-                            width=60,
-                            height=120,
-                            bgcolor=colors.BROWN,
-                            border_radius=5
-                        )
-                    )
-                    page.update()
-                    # Continuar el bucle para tomar otra ficha del pozo
-            
-            # Si salimos del bucle sin encontrar una ficha jugable
-            if not ficha_encontrada:
-                mensaje_final = f"La computadora tomó {fichas_tomadas} ficha(s) del pozo pero ninguna sirve. Pasa."
-            
-            # Mostrar el mensaje final
-            if mensaje_final:
-                mostrar_mensaje(page, mensaje_final)
-                
-            # Si la computadora ha colocado una ficha, verificar si ha ganado
-            if ficha_encontrada and len(fichas_app) == 0:
-                mostrar_mensaje(page, "¡La computadora ha ganado!")
-            elif ficha_encontrada:
-                # Cambiar el turno al jugador y actualizar el indicador
-                turno_jugador = True
-                actualizar_indicador_turno()
+                mensaje = "La computadora ha tomado una ficha del pozo"
+                mostrar_mensaje(page, mensaje)
+                page.update()
+                return
             else:
-                # Si no encontró una ficha jugable, también cambiar turno al jugador
-                turno_jugador = True
-                actualizar_indicador_turno()
-            
-            actualizar_zoom_automatico(area_juego, contenedor_area_juego, texto_zoom)
-            page.update()
-            return
+                mensaje = "La computadora no tiene fichas para jugar y el pozo está vacío. Pasa."
+                mostrar_mensaje(page, mensaje)
+                return
         
-        # Si la computadora tiene fichas jugables, usar una de ellas
         ficha_elegida, origen = random.choice(todas_fichas_jugables)
         
         if (ficha_elegida, origen) in fichas_jugables_arriba:
@@ -980,9 +898,15 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
                 ficha_elegida.repr1, ficha_elegida.repr2 = ficha_elegida.repr2, ficha_elegida.repr1
             estado_juego.numero_abajo = ficha_elegida.numero2
         
-        fichas_app.remove(ficha_elegida)
-        if fichas_app_view.controls:
-            fichas_app_view.controls.pop()
+        if origen == "app":
+            fichas_app.remove(ficha_elegida)
+            if fichas_app_view.controls:
+                fichas_app_view.controls.pop()
+        else:
+            pozo.remove(ficha_elegida)
+            for container in pozo_view.controls:
+                if hasattr(container, 'actualizar'):
+                    container.actualizar()
         
         # Actualizar la representación de la ficha jugada según el modo inicial
         ficha_elegida.repr1 = obtener_representacion_forzada(ficha_elegida.numero1, False)
@@ -1025,7 +949,8 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
             turno_jugador = True
             actualizar_indicador_turno()
         
-        mensaje = "La computadora ha jugado una ficha de su mano"
+        origen_texto = "el pozo" if origen == "pozo" else "su mano"
+        mensaje = f"La computadora ha jugado una ficha de {origen_texto}"
         mostrar_mensaje(page, mensaje)
         
         actualizar_zoom_automatico(area_juego, contenedor_area_juego, texto_zoom)
