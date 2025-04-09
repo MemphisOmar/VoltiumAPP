@@ -492,9 +492,9 @@ def crear_pozo_column(fichas, on_ficha_seleccionada, fichas_jugador=None, fichas
             ft.Container(
                 width=56,  # Reducido de 80 a 56 (30% menos)
                 height=98,  # Reducido de 140 a 98 (30% menos)
-                bgcolor=colors.BROWN,
+                bgcolor=colors.WHITE,
+                border=ft.border.all(2, "#1B4D3E"),
                 border_radius=5,
-                border=ft.border.all(1, colors.BLACK),
                 margin=ft.margin.only(bottom=5),
                 on_click=lambda e, f=ficha: on_ficha_click(e, f)
             ) 
@@ -513,9 +513,9 @@ def crear_pozo_column(fichas, on_ficha_seleccionada, fichas_jugador=None, fichas
             ft.Container(
                 width=56,  # Reducido de 80 a 56 (30% menos)
                 height=98,  # Reducido de 140 a 98 (30% menos)
-                bgcolor=colors.BROWN,
+                bgcolor=colors.WHITE,
+                border=ft.border.all(2, "#1B4D3E"),
                 border_radius=5,
-                border=ft.border.all(1, colors.BLACK),
                 margin=ft.margin.only(bottom=5),  # Agregar margen entre fichas
                 on_click=lambda e, f=ficha: on_ficha_click(e, f)
             ) 
@@ -523,7 +523,7 @@ def crear_pozo_column(fichas, on_ficha_seleccionada, fichas_jugador=None, fichas
         ],
         spacing=2,
         scroll=ft.ScrollMode.AUTO,
-        height=600  # Altura fija para la columna de fichas
+        height=800  # Aumentado de 600 a 800
     )
     
     contenedor_columna = ft.Container(
@@ -551,9 +551,10 @@ def crear_pozo_column(fichas, on_ficha_seleccionada, fichas_jugador=None, fichas
 def crear_fichas_app_row(cantidad):
     """Crea una fila de fichas ocultas para la aplicación"""
     ficha_oculta = ft.Container(
-        width=42,  # Reducido de 60 a 42 (30% menos)
-        height=84,  # Reducido de 120 a 84 (30% menos)
-        bgcolor=colors.BROWN,
+        width=42,
+        height=84,
+        bgcolor=colors.WHITE,
+        border=ft.border.all(2, "#1B4D3E"),
         border_radius=5
     )
     return ft.Row(
@@ -742,13 +743,13 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         
  #ZOOM DE LAS FICHAS
         if num_fichas <= 3:
-            return 0.85
+            return 0.95
         elif num_fichas <= 6:
             return 0.7
         elif num_fichas <= 9:
-            return 0.65
+            return 0.55
         elif num_fichas <= 12:
-            return 0.50
+            return 0.40
         else:
             return 0.6
 
@@ -983,13 +984,13 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         actualizar_zoom_automatico(area_juego, contenedor_area_juego, texto_zoom)
         page.update()
 
-    # Área de juego central scrolleable - altura reducida
+    # Área de juego central scrolleable - altura aumentada
     area_juego = ft.Column(
         controls=[],
         alignment=ft.MainAxisAlignment.CENTER,
         spacing=5,  # Reducido de 10 a 5
         scroll=ft.ScrollMode.AUTO,  # Hacer scrolleable
-        height=500,  # Aumentado de 350 a 500
+        height=700,  # Aumentado de 500 a 700
     )
 
     # Crear las zonas de destino y configurar área de juego inicial
@@ -1015,10 +1016,10 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
 
     contenedor_area_juego = ft.Container(
         content=area_juego,
-        height=600,  # Aumentado de 450 a 600
+        height=600,  # Aumentado de 600 a 800
         border=ft.border.all(1, colors.GREY_400),
-        border_radius=3,
-        padding=3,
+        border_radius=5,
+        padding=5,
         scale=escala_actual,
         alignment=ft.alignment.center,
         bgcolor="#1B4D3E"  
