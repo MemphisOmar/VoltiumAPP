@@ -160,7 +160,7 @@ def crear_representacion_puntos(numero):
 def crear_contenido_ficha(valor_representacion):
     """Crea el contenido de la ficha según el tipo de representación"""
     tipo, valor = valor_representacion
-    if tipo == "numero":
+    if (tipo == "numero"):
         # En lugar de mostrar el número como texto, mostrar puntos
         return crear_representacion_puntos(int(valor))
     else:  # tipo == "color"
@@ -195,8 +195,8 @@ def crear_ficha_visual(numero1, numero2, es_central=False, repr1=None, repr2=Non
                     alignment=ft.alignment.center,
                     # Solo usamos el color de fondo si es representación de números
                     bgcolor=color_fondo if tipo1 == "numero" else None,
-                    width=60,
-                    height=60,
+                    width=40,  # Reducido de 60 a 40
+                    height=40,  # Reducido de 60 a 40
                     # Solo añadimos borde si es representación de números
                     border=ft.border.all(1, color_borde) if tipo1 == "numero" else None
                 ),
@@ -205,8 +205,8 @@ def crear_ficha_visual(numero1, numero2, es_central=False, repr1=None, repr2=Non
                     alignment=ft.alignment.center,
                     # Solo usamos el color de fondo si es representación de números
                     bgcolor=color_fondo if tipo2 == "numero" else None,
-                    width=60,
-                    height=60,
+                    width=40,  # Reducido de 60 a 40
+                    height=40,  # Reducido de 60 a 40
                     # Solo añadimos borde si es representación de números
                     border=ft.border.all(1, color_borde) if tipo2 == "numero" else None
                 )
@@ -239,8 +239,8 @@ def crear_ficha_visual_horizontal(numero1, numero2, es_central=False, repr1=None
                     alignment=ft.alignment.center,
                     # Solo usamos el color de fondo si es representación de números
                     bgcolor=color_fondo if tipo1 == "numero" else None,
-                    width=60,
-                    height=60,
+                    width=40,  # Reducido de 60 a 40
+                    height=40,  # Reducido de 60 a 40
                     # Solo añadimos borde si es representación de números
                     border=ft.border.all(1, color_borde) if tipo1 == "numero" else None
                 ),
@@ -249,8 +249,8 @@ def crear_ficha_visual_horizontal(numero1, numero2, es_central=False, repr1=None
                     alignment=ft.alignment.center,
                     # Solo usamos el color de fondo si es representación de números
                     bgcolor=color_fondo if tipo2 == "numero" else None,
-                    width=60,
-                    height=60,
+                    width=40,  # Reducido de 60 a 40
+                    height=40,  # Reducido de 60 a 40
                     # Solo añadimos borde si es representación de números
                     border=ft.border.all(1, color_borde) if tipo2 == "numero" else None
                 )
@@ -261,7 +261,7 @@ def crear_ficha_visual_horizontal(numero1, numero2, es_central=False, repr1=None
         bgcolor=color_borde,  # También cambiar el color del borde exterior
         padding=1,
         border_radius=5,
-        width=122  # Ancho fijo que corresponde a: 60 (ancho contenedor) * 2 + 1 (spacing) + 1 (padding izq/der)
+        width=82  # Ajustado para el nuevo tamaño: 40 * 2 + 1 (spacing) + 1 (padding)
     )
 
 def crear_ficha_visual_jugador(ficha, on_drag_complete=None):
@@ -279,8 +279,8 @@ def crear_ficha_visual_jugador(ficha, on_drag_complete=None):
                         alignment=ft.alignment.center,
                         # Solo usamos el color de fondo si es representación de números
                         bgcolor=colors.WHITE if tipo1 == "numero" else None,
-                        width=60,
-                        height=60,
+                        width=40,  # Reducido de 60 a 40
+                        height=40,  # Reducido de 60 a 40
                         # Solo añadimos borde si es representación de números
                         border=ft.border.all(1, colors.BLACK) if tipo1 == "numero" else None
                     ),
@@ -289,8 +289,8 @@ def crear_ficha_visual_jugador(ficha, on_drag_complete=None):
                         alignment=ft.alignment.center,
                         # Solo usamos el color de fondo si es representación de números
                         bgcolor=colors.WHITE if tipo2 == "numero" else None,
-                        width=60,
-                        height=60,
+                        width=40,  # Reducido de 60 a 40
+                        height=40,  # Reducido de 60 a 40
                         # Solo añadimos borde si es representación de números
                         border=ft.border.all(1, colors.BLACK) if tipo2 == "numero" else None
                     )
@@ -409,21 +409,21 @@ def crear_zona_destino(page: ft.Page, estado_juego, posicion, on_ficha_jugada, a
 
     return ft.DragTarget(
         content=ft.Container(
-            width=70,
-            height=140,
+            width=50,  # Reducido de 70 a 50
+            height=100,  # Reducido de 140 a 100
             border=ft.border.all(2, colors.GREY_400),
             border_radius=5,
             bgcolor="#E0E0E033",
             content=ft.Column(
                 controls=[
                     ft.Container(
-                        height=70,
-                        width=70,
+                        height=50,  # Reducido de 70 a 50
+                        width=50,   # Reducido de 70 a 50
                         border=ft.border.all(1, colors.GREY_400)  # Removido el estilo DASHED
                     ),
                     ft.Container(
-                        height=70,
-                        width=70,
+                        height=50,  # Reducido de 70 a 50
+                        width=50,   # Reducido de 70 a 50
                         border=ft.border.all(1, colors.GREY_400)  # Removido el estilo DASHED
                     )
                 ],
@@ -450,16 +450,16 @@ def crear_ficha_pozo(ficha, on_click):
                     content=crear_contenido_ficha(ficha.repr1),
                     alignment=ft.alignment.center,
                     bgcolor=colors.WHITE,
-                    width=60,
-                    height=60,
+                    width=40,  # Reducido de 60 a 40
+                    height=40,  # Reducido de 60 a 40
                     border=ft.border.all(1, colors.BLACK)
                 ),
                 ft.Container(
                     content=crear_contenido_ficha(ficha.repr2),
                     alignment=ft.alignment.center,
                     bgcolor=colors.WHITE,
-                    width=60,
-                    height=60,
+                    width=40,  # Reducido de 60 a 40
+                    height=40,  # Reducido de 60 a 40
                     border=ft.border.all(1, colors.BLACK)
                 )
             ],
@@ -490,8 +490,8 @@ def crear_pozo_column(fichas, on_ficha_seleccionada, fichas_jugador=None, fichas
         # Recrear los controles de la columna para reflejar el estado actual del pozo
         columna_fichas.controls = [
             ft.Container(
-                width=80,
-                height=140,
+                width=56,  # Reducido de 80 a 56 (30% menos)
+                height=98,  # Reducido de 140 a 98 (30% menos)
                 bgcolor=colors.BROWN,
                 border_radius=5,
                 border=ft.border.all(1, colors.BLACK),
@@ -511,8 +511,8 @@ def crear_pozo_column(fichas, on_ficha_seleccionada, fichas_jugador=None, fichas
     columna_fichas = ft.Column(
         controls=[
             ft.Container(
-                width=80,  # Aumentado de 60 a 80
-                height=140,  # Aumentado de 120 a 140
+                width=56,  # Reducido de 80 a 56 (30% menos)
+                height=98,  # Reducido de 140 a 98 (30% menos)
                 bgcolor=colors.BROWN,
                 border_radius=5,
                 border=ft.border.all(1, colors.BLACK),
@@ -528,11 +528,12 @@ def crear_pozo_column(fichas, on_ficha_seleccionada, fichas_jugador=None, fichas
     
     contenedor_columna = ft.Container(
         content=columna_fichas,
-        width=120,  # Ancho fijo para el contenedor
+        width=84,  # Reducido de 120 a 84 (30% menos)
         height=600,  # Aumentado de 300 a 600
         border=ft.border.all(1, colors.GREY_400),
         border_radius=5,
-        padding=10
+        padding=7,  # Reducido de 10 a 7 (30% menos)
+        bgcolor="#1B4D3E"
     )
     
     # Exportar la función de actualización para que sea accesible desde fuera
@@ -550,8 +551,8 @@ def crear_pozo_column(fichas, on_ficha_seleccionada, fichas_jugador=None, fichas
 def crear_fichas_app_row(cantidad):
     """Crea una fila de fichas ocultas para la aplicación"""
     ficha_oculta = ft.Container(
-        width=60,
-        height=120,
+        width=42,  # Reducido de 60 a 42 (30% menos)
+        height=84,  # Reducido de 120 a 84 (30% menos)
         bgcolor=colors.BROWN,
         border_radius=5
     )
@@ -739,17 +740,15 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         """Calcula el factor de zoom basado en el número de fichas en el tablero"""
         num_fichas = len([c for c in area_juego.controls if not isinstance(c, ft.DragTarget)])
         
-        # Base el zoom en el número de fichas
-        # Comenzamos con zoom 1.0 para 1-3 fichas
-        # Reducimos gradualmente conforme aumentan las fichas
+ #ZOOM DE LAS FICHAS
         if num_fichas <= 3:
-            return 1.0
+            return 0.85
         elif num_fichas <= 6:
-            return 0.9
-        elif num_fichas <= 9:
-            return 0.8
-        elif num_fichas <= 12:
             return 0.7
+        elif num_fichas <= 9:
+            return 0.65
+        elif num_fichas <= 12:
+            return 0.50
         else:
             return 0.6
 
@@ -990,7 +989,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         alignment=ft.MainAxisAlignment.CENTER,
         spacing=5,  # Reducido de 10 a 5
         scroll=ft.ScrollMode.AUTO,  # Hacer scrolleable
-        height=350,  # Reducido de 400 a 350
+        height=500,  # Aumentado de 350 a 500
     )
 
     # Crear las zonas de destino y configurar área de juego inicial
@@ -1016,7 +1015,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
 
     contenedor_area_juego = ft.Container(
         content=area_juego,
-        height=450,
+        height=600,  # Aumentado de 450 a 600
         border=ft.border.all(1, colors.GREY_400),
         border_radius=3,
         padding=3,
