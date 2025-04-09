@@ -557,7 +557,25 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
 
     escala_actual = 1.0
 
+    # Declarar turno_jugador como variable local
+    turno_jugador = True
+
+    def actualizar_indicador_turno():
+        """
+        Actualiza el indicador visual del turno.
+        """
+        if turno_jugador:
+            indicador_turno.bgcolor = colors.GREEN
+            texto_turno.value = "Tu turno"
+        else:
+            indicador_turno.bgcolor = colors.RED
+            texto_turno.value = "Turno PC"
+        page.update()
+
     def obtener_representacion_forzada(numero, es_para_jugador):
+        """
+        Obtiene la representación de un número como color o número según el modo inicial.
+        """
         color, _ = COLORES_DOMINO[numero]
         if modo_central_numeros:
             return ("numero", str(numero)) if not es_para_jugador else ("color", color)
@@ -611,6 +629,23 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
     
     ficha_central, quien_empieza = encontrar_ficha_inicial(fichas_jugador, fichas_app)
     
+    # Invertir la lógica: si el jugador empieza (puso la ficha), ahora es turno del oponente
+    # Si el oponente empieza (puso la ficha), ahora es turno del jugador
+    turno_jugador = quien_empieza != "jugador"
+    
+    # Función para actualizar el indicador de turno
+    def actualizar_indicador_turno():
+        """
+        Actualiza el indicador visual del turno.
+        """
+        if turno_jugador:
+            indicador_turno.bgcolor = colors.GREEN
+            texto_turno.value = "Tu turno"
+        else:
+            indicador_turno.bgcolor = colors.RED
+            texto_turno.value = "Turno PC"
+        page.update()
+
     if quien_empieza == "jugador":
         fichas_jugador.remove(ficha_central)
     else:
@@ -697,6 +732,12 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         contenedor_area_juego.page.update()
 
     def on_ficha_jugada(ficha, lado):
+        nonlocal turno_jugador  # Declarar turno_jugador como nonlocal
+        
+        # Actualizar la representación de la ficha jugada según el modo inicial
+        ficha.repr1 = obtener_representacion_forzada(ficha.numero1, False)
+        ficha.repr2 = obtener_representacion_forzada(ficha.numero2, False)
+        
         for control in fichas_jugador_view.controls[:]:
             if control.data.identificador == ficha.identificador:
                 fichas_jugador_view.controls.remove(control)
@@ -706,15 +747,15 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         
         ficha_visual = (
             crear_ficha_visual_horizontal(ficha.numero1, ficha.numero2, 
-                                       repr1=ficha.repr1, repr2=ficha.repr2)
+                                          repr1=ficha.repr1, repr2=ficha.repr2)
             if es_doble
             else crear_ficha_visual(ficha.numero1, ficha.numero2, 
-                                  repr1=ficha.repr1, repr2=ficha.repr2)
+                                    repr1=ficha.repr1, repr2=ficha.repr2)
         )
         
         if lado == "arriba":
             indices_zonas = [i for i, control in enumerate(area_juego.controls) 
-                           if isinstance(control, ft.DragTarget)]
+                             if isinstance(control, ft.DragTarget)]
             if indices_zonas:
                 indice_actual = indices_zonas[0]
                 area_juego.controls[indice_actual] = ficha_visual
@@ -722,7 +763,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
                 area_juego.controls.insert(0, nueva_zona)
         else:
             indices_zonas = [i for i, control in enumerate(area_juego.controls) 
-                           if isinstance(control, ft.DragTarget)]
+                             if isinstance(control, ft.DragTarget)]
             if indices_zonas:
                 indice_actual = indices_zonas[-1]
                 area_juego.controls[indice_actual] = ficha_visual
@@ -730,9 +771,19 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
                 area_juego.controls.append(nueva_zona)
         
         actualizar_zoom_automatico(area_juego, contenedor_area_juego, texto_zoom)
+        
+        # Verificar si el jugador ha ganado
+        if len(fichas_jugador_view.controls) == 0:
+            mensaje = "¡Has ganado!"
+            mostrar_mensaje(page, mensaje)
+            return
+        
+        # Cambiar el turno al oponente y actualizar el indicador
+        turno_jugador = False
+        actualizar_indicador_turno()
         page.update()
 
-        page.after(3000, lambda _: colocar_ficha_especial())
+        page.after(2000, lambda _: colocar_ficha_especial())
 
     def agregar_ficha_del_pozo(ficha):
         if ficha in pozo:
@@ -781,6 +832,12 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         page.update()
 
     def colocar_ficha_especial(e=None):
+        nonlocal turno_jugador  # Declarar turno_jugador como nonlocal
+        
+        # Si es el turno del jugador, no hacer nada
+        if turno_jugador:
+            return
+            
         numero_arriba = estado_juego.numero_arriba
         numero_abajo = estado_juego.numero_abajo
         
@@ -851,6 +908,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
                 if hasattr(container, 'actualizar'):
                     container.actualizar()
         
+        # Actualizar la representación de la ficha jugada según el modo inicial
         ficha_elegida.repr1 = obtener_representacion_forzada(ficha_elegida.numero1, False)
         ficha_elegida.repr2 = obtener_representacion_forzada(ficha_elegida.numero2, False)
         
@@ -858,12 +916,12 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         
         ficha_visual = (
             crear_ficha_visual_horizontal(ficha_elegida.numero1, ficha_elegida.numero2, 
-                                         repr1=ficha_elegida.repr1, repr2=ficha_elegida.repr2,
-                                         es_computadora=True)
+                                          repr1=ficha_elegida.repr1, repr2=ficha_elegida.repr2,
+                                          es_computadora=True)
             if es_doble else
             crear_ficha_visual(ficha_elegida.numero1, ficha_elegida.numero2, 
-                              repr1=ficha_elegida.repr1, repr2=ficha_elegida.repr2,
-                              es_computadora=True)
+                               repr1=ficha_elegida.repr1, repr2=ficha_elegida.repr2,
+                               es_computadora=True)
         )
         
         if lado_a_jugar == "arriba":
@@ -874,11 +932,6 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
                 area_juego.controls[indice_actual] = ficha_visual
                 nueva_zona = crear_zona_destino(page, estado_juego, "arriba", on_ficha_jugada, area_juego, obtener_representacion_forzada)
                 area_juego.controls.insert(0, nueva_zona)
-            else:
-                mensaje = "Error: No hay zonas disponibles para colocar la ficha"
-                mostrar_mensaje(page, mensaje)
-                return
-            
         else:
             indices_zonas = [i for i, control in enumerate(area_juego.controls) 
                             if isinstance(control, ft.DragTarget)]
@@ -887,14 +940,14 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
                 area_juego.controls[indice_actual] = ficha_visual
                 nueva_zona = crear_zona_destino(page, estado_juego, "abajo", on_ficha_jugada, area_juego, obtener_representacion_forzada)
                 area_juego.controls.append(nueva_zona)
-            else:
-                mensaje = "Error: No hay zonas disponibles para colocar la ficha"
-                mostrar_mensaje(page, mensaje)
-                return
         
         if len(fichas_app) == 0:
             mensaje = "¡La computadora ha ganado!"
             mostrar_mensaje(page, mensaje)
+        else:
+            # Cambiar el turno al jugador y actualizar el indicador
+            turno_jugador = True
+            actualizar_indicador_turno()
         
         origen_texto = "el pozo" if origen == "pozo" else "su mano"
         mensaje = f"La computadora ha jugado una ficha de {origen_texto}"
@@ -903,12 +956,13 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         actualizar_zoom_automatico(area_juego, contenedor_area_juego, texto_zoom)
         page.update()
 
+    # Reducir la altura inicial del área de juego
     area_juego = ft.Column(
         controls=[],
         alignment=ft.MainAxisAlignment.CENTER,
         spacing=5,
         scroll=ft.ScrollMode.AUTO,
-        height=700,
+        height=400,  # Reducido de 700 a 400
     )
 
     zona_arriba = crear_zona_destino(page, estado_juego, "arriba", on_ficha_jugada, area_juego, obtener_representacion_forzada)
@@ -930,7 +984,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
 
     contenedor_area_juego = ft.Container(
         content=area_juego,
-        height=600,
+        height=350,  # Reducido de 600 a 350
         border=ft.border.all(1, colors.GREY_400),
         border_radius=5,
         padding=5,
@@ -961,6 +1015,19 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
             color=colors.WHITE,
             bgcolor=colors.BLUE_700
         )
+    )
+
+    # Crear el indicador de turno con la lógica invertida
+    texto_turno = ft.Text("Tu turno" if quien_empieza != "jugador" else "Turno PC", 
+                         color=colors.WHITE, weight=ft.FontWeight.BOLD, size=16)
+    indicador_turno = ft.Container(
+        content=texto_turno,
+        width=100,
+        height=40,
+        bgcolor=colors.GREEN if quien_empieza != "jugador" else colors.RED,
+        border_radius=5,
+        alignment=ft.alignment.center,
+        margin=ft.margin.only(bottom=10)
     )
 
     page.add(
@@ -994,12 +1061,13 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
                                     alignment=ft.alignment.center,
                                     padding=5,
                                 ),
-                                contenedor_area_juego,
+                                contenedor_area_juego,  # Tablero reducido
+                                indicador_turno,  # Añadir el indicador de turno
                                 controles_zoom,
                                 ft.Container(
                                     content=fichas_jugador_view,
                                     padding=2,
-                                    height=150,
+                                    height=200,  # Aumentado de 150 a 200 para dar más espacio a las fichas del usuario
                                 ),
                             ],
                             alignment=ft.MainAxisAlignment.START,
@@ -1019,6 +1087,10 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         )
     )
 
+    # Si es turno del PC (el jugador puso la ficha central), hacer que juegue automáticamente
+    if not turno_jugador:
+        page.after(2000, lambda _: colocar_ficha_especial())
+        
     actualizar_zoom_automatico(area_juego, contenedor_area_juego, texto_zoom)
     page.update()
 
