@@ -638,7 +638,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
 
     page.clean()
     page.title = "DOMINO - Principiante"
-    page.bgcolor = "#b9b3a7"
+    page.bgcolor = "#1B4D3E"  # Color de fondo verde claro
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.window_width = 720

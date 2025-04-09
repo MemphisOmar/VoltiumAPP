@@ -16,7 +16,7 @@ from flet import (
 def main(page: ft.Page):
     page.clean()  #Limpiar la página actual antes de agregar los elementos del menú
     page.title = "VOLTIUM"
-    page.bgcolor = "#b9b3a7"
+    page.bgcolor = "#88B98A"  # Color de fondo verde claro
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.window.width = 720
