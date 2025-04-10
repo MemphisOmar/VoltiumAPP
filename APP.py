@@ -14,6 +14,16 @@ from flet import (
 )
 
 def main(page: ft.Page):
+    # Variable de control para el estado de la aplicación
+    page.app_running = True
+    
+    def on_window_event(e):
+        if e.data == "close":
+            page.app_running = False
+            page.window_destroy()
+    
+    page.window.on_event = on_window_event
+    
     page.clean()  #Limpiar la página actual antes de agregar los elementos del menú
     page.title = "VOLTIUM"
     page.bgcolor = "#88B98A"  # Color de fondo verde claro
@@ -26,12 +36,15 @@ def main(page: ft.Page):
     page.margin = 0
 
     def jugar_click(e):
-        configurar_ventana_juego(page, main)
+        if page.app_running:
+            configurar_ventana_juego(page, main)
 
     def ayuda_click(e):
-        mostrar_ayuda(page)  #Llamar a la subrutina desde ayuda.py
+        if page.app_running:
+            mostrar_ayuda(page)  #Llamar a la subrutina desde ayuda.py
 
     def salir_click(e):
+        page.app_running = False
         page.window_close()
 
     jugar_button = ft.ElevatedButton(text="JUGAR", on_click=jugar_click, width=200, height=50, color="#29c589")

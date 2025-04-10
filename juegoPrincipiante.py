@@ -579,195 +579,273 @@ def encontrar_ficha_inicial(fichas_jugador, fichas_app):
         return mejor_ficha_jugador, "jugador"
     return mejor_ficha_app, "app"
 
-def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
-    global fichas_disponibles
-    fichas_disponibles = crear_fichas_domino()
-    
-    # Inicializar el cronómetro
-    game_timer = Timer()
-    timer_text = ft.Text("00:00", color=colors.WHITE, size=20, weight=ft.FontWeight.BOLD)
-    
-    def update_timer():
-        if game_timer.is_running:
-            timer_text.value = game_timer.get_time_string()
-            page.update()
-            # Schedule next update in 1 second
-            threading.Timer(1.0, update_timer).start()
-    
-    # Iniciar el cronómetro y el timer
-    game_timer.start()
-    threading.Timer(1.0, update_timer).start()
-    
-    def volver_al_menu_principal_click(e):
-        global fichas_disponibles
-        fichas_disponibles = crear_fichas_domino()
-        volver_al_menu_principal(page)
-
-    modo_central_numeros = random.choice([True, False])
-    
-    modo_mensaje = ("El tablero central mostrará números y tus fichas colores" 
-                   if modo_central_numeros else 
-                   "El tablero central mostrará colores y tus fichas números")
-
-    escala_actual = 1.0
-
-    # Declarar turno_jugador como variable local
-    turno_jugador = True
-
-    def actualizar_indicador_turno():
-        """
-        Actualiza el indicador visual del turno.
-        """
-        if turno_jugador:
-            indicador_turno.bgcolor = colors.GREEN
-            texto_turno.value = "Tu turno"
-        else:
-            indicador_turno.bgcolor = colors.RED
-            texto_turno.value = "Turno PC"
-        page.update()
-
-    def obtener_representacion_forzada(numero, es_para_jugador):
-        """
-        Obtiene la representación de un número como color o número según el modo inicial.
-        """
-        color, _ = COLORES_DOMINO[numero]
-        if modo_central_numeros:
-            return ("numero", str(numero)) if not es_para_jugador else ("color", color)
-        else:
-            return ("color", color) if not es_para_jugador else ("numero", str(numero))
-
-    def convertir_fichas_segun_modo(fichas, es_para_jugador):
-        for ficha in fichas:
-            ficha.repr1 = obtener_representacion_forzada(ficha.numero1, es_para_jugador)
-            ficha.repr2 = obtener_representacion_forzada(ficha.numero2, es_para_jugador)
-        return fichas
-
-    def volver_al_menu_principal_click(e):
-        game_timer.stop()  # Detener el cronómetro al volver al menú
-        global fichas_disponibles
-        fichas_disponibles = crear_fichas_domino()
-        volver_al_menu_principal(page)
-
-    def get_mensaje_ficha_inicial(quien_empieza, ficha, usa_numeros_central):
-        quien_txt = 'Tú empiezas' if quien_empieza == "jugador" else 'La computadora empieza'
-        
-        if usa_numeros_central:
-            return f"{quien_txt} con la ficha [{ficha.numero1}-{ficha.numero2}]"
-        else:
-            _, nombre_color1 = COLORES_DOMINO[ficha.numero1]
-            _, nombre_color2 = COLORES_DOMINO[ficha.numero2]
-            return f"{quien_txt} con la ficha [{nombre_color1}-{nombre_color2}]"
-
-    page.clean()
-    page.title = "DOMINO - Principiante"
-    page.bgcolor = "#1B4D3E"
-    page.vertical_alignment = ft.MainAxisAlignment.CENTER
-    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-    page.window_width = 720
-    page.window_height = 1280
-    page.window_resizable = False
-    page.padding = 0
-    page.margin = 0
-
-    titulo = ft.Text("Modo Principiante", size=24, color=colors.BLACK)
-    volver_button = ft.ElevatedButton(
-        text="Volver al menú",
-        on_click=volver_al_menu_principal_click,
-        width=120,
-        height=40
-    )
-
-    fichas_jugador, fichas_app, pozo = repartir_fichas()
-    
-    fichas_jugador = convertir_fichas_segun_modo(fichas_jugador, True)
-    fichas_app = convertir_fichas_segun_modo(fichas_app, False)
-    
-    ficha_central, quien_empieza = encontrar_ficha_inicial(fichas_jugador, fichas_app)
-    
-    # Invertir la lógica: si el jugador empieza (puso la ficha), ahora es turno del oponente
-    # Si el oponente empieza (puso la ficha), ahora es turno del jugador
-    turno_jugador = quien_empieza != "jugador"
-    
-    # Función para actualizar el indicador de turno
-    def actualizar_indicador_turno():
-        """
-        Actualiza el indicador visual del turno.
-        """
-        if turno_jugador:
-            indicador_turno.bgcolor = colors.GREEN
-            texto_turno.value = "Tu turno"
-        else:
-            indicador_turno.bgcolor = colors.RED
-            texto_turno.value = "Turno PC"
-        page.update()
-
-    if quien_empieza == "jugador":
-        fichas_jugador.remove(ficha_central)
-    else:
-        fichas_app.remove(ficha_central)
-    
-    ficha_central.repr1 = obtener_representacion_forzada(ficha_central.numero1, False)
-    ficha_central.repr2 = obtener_representacion_forzada(ficha_central.numero2, False)
-    
-    estado_juego = EstadoJuego(ficha_central)
-
-    def cerrar_dialogo(e):
-        dlg.open = False
-        page.update()
-
-    dlg = ft.AlertDialog(
-        title=ft.Text(
-            "Modo de Juego",
-            size=18,
-            weight=ft.FontWeight.BOLD,
-            text_align=ft.TextAlign.CENTER
-        ),
-        content=ft.Container(
-            content=ft.Column(
-                [
-                    ft.Container(
-                        content=ft.Text(
-                            modo_mensaje,
-                            size=14,
-                            text_align=ft.TextAlign.CENTER
-                        ),
-                        padding=ft.padding.all(5)
-                    ),
-                    ft.Divider(height=1, color=colors.BLUE_GREY_200),
-                    ft.Container(
-                        content=ft.Text(
-                            get_mensaje_ficha_inicial(quien_empieza, ficha_central, modo_central_numeros),
-                            size=14,
-                            text_align=ft.TextAlign.CENTER
-                        ),
-                        padding=ft.padding.all(5)
-                    )
-                ],
-                tight=True,
-                spacing=0,
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER
+class JuegoPrincipiante:
+    def __init__(self, page: ft.Page, main_menu=None):
+        self.page = page
+        self.main_menu = main_menu
+        self.timer_active = True
+        self.fichas_disponibles = crear_fichas_domino()
+        self.game_timer = Timer()
+        self.timer_text = ft.Text("00:00", color=colors.WHITE, size=20, weight=ft.FontWeight.BOLD)
+        self.modo_central_numeros = random.choice([True, False])
+        self.modo_mensaje = ("El tablero central mostrará números y tus fichas colores" 
+                            if self.modo_central_numeros else 
+                            "El tablero central mostrará colores y tus fichas números")
+        self.escala_actual = 1.0
+        self.turno_jugador = True
+        self.fichas_jugador, self.fichas_app, self.pozo = repartir_fichas()
+        self.fichas_jugador = self.convertir_fichas_segun_modo(self.fichas_jugador, True)
+        self.fichas_app = self.convertir_fichas_segun_modo(self.fichas_app, False)
+        self.ficha_central, self.quien_empieza = encontrar_ficha_inicial(self.fichas_jugador, self.fichas_app)
+        self.turno_jugador = self.quien_empieza != "jugador"
+        self.estado_juego = EstadoJuego(self.ficha_central)
+        self.page.clean()
+        self.page.title = "DOMINO - Principiante"
+        self.page.bgcolor = "#1B4D3E"
+        self.page.vertical_alignment = ft.MainAxisAlignment.CENTER
+        self.page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+        self.page.window_width = 720
+        self.page.window_height = 1280
+        self.page.window_resizable = False
+        self.page.padding = 0
+        self.page.margin = 0
+        self.titulo = ft.Text("Modo Principiante", size=24, color=colors.BLACK)
+        self.volver_button = ft.ElevatedButton(
+            text="Volver al menú",
+            on_click=self.volver_menu,
+            width=120,
+            height=40
+        )
+        self.ficha_central.repr1 = self.obtener_representacion_forzada(self.ficha_central.numero1, False)
+        self.ficha_central.repr2 = self.obtener_representacion_forzada(self.ficha_central.numero2, False)
+        self.dlg = ft.AlertDialog(
+            title=ft.Text(
+                "Modo de Juego",
+                size=18,
+                weight=ft.FontWeight.BOLD,
+                text_align=ft.TextAlign.CENTER
             ),
-            padding=ft.padding.all(5),
-            width=280
-        ),
-        actions=[
-            ft.ElevatedButton(
-                "Entendido",
-                on_click=cerrar_dialogo,
-                style=ft.ButtonStyle(
-                    color=colors.WHITE,
-                    bgcolor=colors.BLUE_400
+            content=ft.Container(
+                content=ft.Column(
+                    [
+                        ft.Container(
+                            content=ft.Text(
+                                self.modo_mensaje,
+                                size=14,
+                                text_align=ft.TextAlign.CENTER
+                            ),
+                            padding=ft.padding.all(5)
+                        ),
+                        ft.Divider(height=1, color=colors.BLUE_GREY_200),
+                        ft.Container(
+                            content=ft.Text(
+                                self.get_mensaje_ficha_inicial(self.quien_empieza, self.ficha_central, self.modo_central_numeros),
+                                size=14,
+                                text_align=ft.TextAlign.CENTER
+                            ),
+                            padding=ft.padding.all(5)
+                        )
+                    ],
+                    tight=True,
+                    spacing=0,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                ),
+                padding=ft.padding.all(5),
+                width=280
+            ),
+            actions=[
+                ft.ElevatedButton(
+                    "Entendido",
+                    on_click=self.cerrar_dialogo,
+                    style=ft.ButtonStyle(
+                        color=colors.WHITE,
+                        bgcolor=colors.BLUE_400
+                    )
                 )
+            ],
+            actions_alignment=ft.MainAxisAlignment.CENTER,
+            shape=ft.RoundedRectangleBorder(radius=8)
+        )
+        self.page.dialog = self.dlg
+        self.dlg.open = True
+        self.area_juego = ft.Column(
+            controls=[],
+            alignment=ft.MainAxisAlignment.CENTER,
+            spacing=5,
+            scroll=ft.ScrollMode.AUTO,
+            height=400,
+        )
+        self.zona_arriba = self.crear_zona_destino("arriba")
+        self.zona_abajo = self.crear_zona_destino("abajo")
+        self.es_ficha_central_doble = self.ficha_central.numero1 == self.ficha_central.numero2
+        self.ficha_central_visual = (
+            crear_ficha_visual_horizontal(self.ficha_central.numero1, self.ficha_central.numero2, es_central=True, repr1=self.ficha_central.repr1, repr2=self.ficha_central.repr2)
+            if self.es_ficha_central_doble
+            else crear_ficha_visual(self.ficha_central.numero1, self.ficha_central.numero2, es_central=True, repr1=self.ficha_central.repr1, repr2=self.ficha_central.repr2)
+        )
+        self.area_juego.controls = [
+            self.zona_arriba,
+            self.ficha_central_visual,
+            self.zona_abajo
+        ]
+        self.contenedor_area_juego = ft.Container(
+            content=self.area_juego,
+            height=350,
+            border=ft.border.all(1, colors.GREY_400),
+            border_radius=5,
+            padding=5,
+            scale=self.escala_actual,
+            alignment=ft.alignment.center,
+            bgcolor="#1B4D3E"  
+        )
+        self.texto_zoom = ft.Text("100%", size=14, weight=ft.FontWeight.BOLD)
+        self.controles_zoom = ft.Row(
+            [self.texto_zoom],
+            alignment=ft.MainAxisAlignment.CENTER,
+            spacing=5,
+        )
+        self.fichas_jugador_view = crear_fichas_jugador_row(self.fichas_jugador, self.estado_juego, self.page)
+        self.fichas_app_view = crear_fichas_app_row(len(self.fichas_app))
+        self.pozo_view = crear_pozo_column(self.pozo, self.agregar_ficha_del_pozo)
+        self.boton_jugar_oponente = ft.ElevatedButton(
+            text="Jugar oponente",
+            tooltip="Hacer jugar al oponente",
+            on_click=self.colocar_ficha_especial,
+            width=120,
+            height=40,
+            style=ft.ButtonStyle(
+                color=colors.WHITE,
+                bgcolor=colors.BLUE_700
             )
-        ],
-        actions_alignment=ft.MainAxisAlignment.CENTER,
-        shape=ft.RoundedRectangleBorder(radius=8)
-    )
-    page.dialog = dlg
-    dlg.open = True
+        )
+        self.texto_turno = ft.Text("Tu turno" if self.quien_empieza != "jugador" else "Turno PC", 
+                                color=colors.WHITE, weight=ft.FontWeight.BOLD, size=16)
+        self.indicador_turno = ft.Container(
+            content=self.texto_turno,
+            width=100,
+            height=40,
+            bgcolor=colors.GREEN if self.quien_empieza != "jugador" else colors.RED,
+            border_radius=5,
+            alignment=ft.alignment.center,
+            margin=ft.margin.only(bottom=10)
+        )
+        self.timer_container = ft.Container(
+            content=self.timer_text,
+            bgcolor=colors.BLUE_GREY_900,
+            padding=10,
+            border_radius=5,
+            margin=ft.margin.only(bottom=10)
+        )
+        self.page.add(
+            ft.Container(
+                content=ft.Row(
+                    [
+                        ft.Container(
+                            content=ft.Column(
+                                [
+                                    self.pozo_view,
+                                    self.timer_container,
+                                    self.volver_button
+                                ],
+                                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                spacing=10,
+                            ),
+                            alignment=ft.alignment.center_left,
+                            width=140,
+                            margin=0,
+                        ),
+                        ft.Container(
+                            content=ft.Column(
+                                [
+                                    self.titulo,
+                                    ft.Container(
+                                        content=self.fichas_app_view,
+                                        padding=2,
+                                        height=100,
+                                    ),
+                                    ft.Container(
+                                        content=self.boton_jugar_oponente,
+                                        alignment=ft.alignment.center,
+                                        padding=5,
+                                    ),
+                                    self.contenedor_area_juego,
+                                    self.indicador_turno,
+                                    self.controles_zoom,
+                                    ft.Container(
+                                        content=self.fichas_jugador_view,
+                                        padding=2,
+                                        height=200,
+                                    ),
+                                ],
+                                alignment=ft.MainAxisAlignment.START,
+                                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                spacing=5,
+                            ),
+                            expand=True,
+                            margin=ft.margin.only(right=10),
+                            padding=0,
+                        ),
+                    ],
+                    expand=True,
+                    spacing=0,
+                    alignment=ft.MainAxisAlignment.START,
+                ),
+                expand=True,
+            )
+        )
+        if not self.turno_jugador:
+            threading.Timer(4.0, self.colocar_ficha_especial).start()
+        self.actualizar_zoom_automatico()
+        self.page.update()
+        self.iniciar_temporizador()
 
-    def calcular_zoom_automatico(area_juego):
-        num_fichas = len([c for c in area_juego.controls if not isinstance(c, ft.DragTarget)])
+    def cleanup(self):
+        self.timer_active = False
+        if hasattr(self, 'timer_thread'):
+            self.timer_thread.join()
+
+    def update_timer(self):
+        while self.timer_active and hasattr(self, 'tiempo_restante'):
+            try:
+                if self.page.app_running:
+                    self.tiempo_restante -= 1
+                    self.text_tiempo.value = f"Tiempo: {self.tiempo_restante}"
+                    self.page.update()
+                time.sleep(1)
+            except Exception as e:
+                print(f"Error en temporizador: {e}")
+                break
+        return False
+
+    def volver_menu(self, e):
+        self.cleanup()
+        if self.main_menu:
+            self.main_menu(self.page)
+        
+    def actualizar_tiempo(self):
+        if hasattr(self, 'game_timer') and hasattr(self, 'timer_text'):
+            while self.timer_active:
+                try:
+                    if self.page.app_running:
+                        self.timer_text.value = self.game_timer.get_time_string()
+                        self.page.update()
+                    time.sleep(1)
+                except Exception as e:
+                    print(f"Error actualizando temporizador: {e}")
+                    break
+
+    def iniciar_temporizador(self):
+        self.game_timer.start()
+        self.timer_thread = threading.Thread(target=self.actualizar_tiempo)
+        self.timer_thread.daemon = True
+        self.timer_thread.start()
+
+    def cerrar_dialogo(self, e):
+        self.dlg.open = False
+        self.page.update()
+
+    def calcular_zoom_automatico(self):
+        num_fichas = len([c for c in self.area_juego.controls if not isinstance(c, ft.DragTarget)])
         
         if num_fichas <= 3:
             return 0.95
@@ -780,21 +858,20 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         else:
             return 0.6
 
-    def actualizar_zoom_automatico(area_juego, contenedor_area_juego, texto_zoom):
-        nuevo_zoom = calcular_zoom_automatico(area_juego)
-        contenedor_area_juego.scale = nuevo_zoom
-        texto_zoom.value = f"{int(nuevo_zoom * 100)}%"
-        contenedor_area_juego.page.update()
+    def actualizar_zoom_automatico(self):
+        nuevo_zoom = self.calcular_zoom_automatico()
+        self.contenedor_area_juego.scale = nuevo_zoom
+        self.texto_zoom.value = f"{int(nuevo_zoom * 100)}%"
+        self.contenedor_area_juego.page.update()
 
-    def on_ficha_jugada(ficha, lado):
-        nonlocal turno_jugador
-        # Actualizar la representación de la ficha jugada según el modo inicial
-        ficha.repr1 = obtener_representacion_forzada(ficha.numero1, False)
-        ficha.repr2 = obtener_representacion_forzada(ficha.numero2, False)
+    def on_ficha_jugada(self, ficha, lado):
+        self.turno_jugador = False
+        ficha.repr1 = self.obtener_representacion_forzada(ficha.numero1, False)
+        ficha.repr2 = self.obtener_representacion_forzada(ficha.numero2, False)
         
-        for control in fichas_jugador_view.controls[:]:
+        for control in self.fichas_jugador_view.controls[:]:
             if control.data.identificador == ficha.identificador:
-                fichas_jugador_view.controls.remove(control)
+                self.fichas_jugador_view.controls.remove(control)
                 break
         
         es_doble = ficha.numero1 == ficha.numero2
@@ -808,114 +885,104 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         )
         
         if lado == "arriba":
-            indices_zonas = [i for i, control in enumerate(area_juego.controls) 
+            indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
                              if isinstance(control, ft.DragTarget)]
             if indices_zonas:
                 indice_actual = indices_zonas[0]
-                area_juego.controls[indice_actual] = ficha_visual
-                nueva_zona = crear_zona_destino(page, estado_juego, "arriba", on_ficha_jugada, area_juego, obtener_representacion_forzada)
-                area_juego.controls.insert(0, nueva_zona)
+                self.area_juego.controls[indice_actual] = ficha_visual
+                nueva_zona = self.crear_zona_destino("arriba")
+                self.area_juego.controls.insert(0, nueva_zona)
         else:
-            indices_zonas = [i for i, control in enumerate(area_juego.controls) 
+            indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
                              if isinstance(control, ft.DragTarget)]
             if indices_zonas:
                 indice_actual = indices_zonas[-1]
-                area_juego.controls[indice_actual] = ficha_visual
-                nueva_zona = crear_zona_destino(page, estado_juego, "abajo", on_ficha_jugada, area_juego, obtener_representacion_forzada)
-                area_juego.controls.append(nueva_zona)
+                self.area_juego.controls[indice_actual] = ficha_visual
+                nueva_zona = self.crear_zona_destino("abajo")
+                self.area_juego.controls.append(nueva_zona)
         
-        actualizar_zoom_automatico(area_juego, contenedor_area_juego, texto_zoom)
+        self.actualizar_zoom_automatico()
         
-        # Verificar si el jugador ha ganado
-        if len(fichas_jugador_view.controls) == 0:
+        if len(self.fichas_jugador_view.controls) == 0:
             mensaje = "¡Has ganado!"
-            mostrar_mensaje(page, mensaje)
+            self.mostrar_mensaje(mensaje)
             return
         
-        # Cambiar el turno al oponente y actualizar el indicador
-        turno_jugador = False
-        actualizar_indicador_turno()
-        page.update()
+        self.turno_jugador = False
+        self.actualizar_indicador_turno()
+        self.page.update()
 
-        # Usar threading.Timer en lugar de window.after
-        if not turno_jugador:
-            threading.Timer(4.0, colocar_ficha_especial).start()
+        if not self.turno_jugador:
+            threading.Timer(4.0, self.colocar_ficha_especial).start()
         
-        page.update()
+        self.page.update()
 
-    def agregar_ficha_del_pozo(ficha):
-        if ficha in pozo:
-            pozo.remove(ficha)
-            ficha.repr1 = obtener_representacion_forzada(ficha.numero1, True)
-            ficha.repr2 = obtener_representacion_forzada(ficha.numero2, True)
-            fichas_jugador.append(ficha)
-            fichas_jugador_view.controls.append(crear_ficha_visual_jugador(ficha))
-            page.update()
+    def agregar_ficha_del_pozo(self, ficha):
+        if ficha in self.pozo:
+            self.pozo.remove(ficha)
+            ficha.repr1 = self.obtener_representacion_forzada(ficha.numero1, True)
+            ficha.repr2 = self.obtener_representacion_forzada(ficha.numero2, True)
+            self.fichas_jugador.append(ficha)
+            self.fichas_jugador_view.controls.append(crear_ficha_visual_jugador(ficha))
+            self.page.update()
 
-    def mostrar_mensaje(page, mensaje):
-        # Detener el timer si hay mensaje de victoria
+    def mostrar_mensaje(self, mensaje):
         if "ganado" in mensaje:
-            game_timer.stop()
+            self.game_timer.stop()
         dlg = ft.AlertDialog(
             content=ft.Text(mensaje),
             actions=[
-                ft.TextButton("OK", on_click=lambda e: cerrar_mensaje(e, dlg))
+                ft.TextButton("OK", on_click=lambda e: self.cerrar_mensaje(e, dlg))
             ]
         )
-        page.dialog = dlg
+        self.page.dialog = dlg
         dlg.open = True
-        page.update()
+        self.page.update()
 
-    def cerrar_mensaje(e, dlg):
+    def cerrar_mensaje(self, e, dlg):
         dlg.open = False
         e.page.update()
     
-    def aumentar_zoom(e):
-        nonlocal escala_actual
-        if escala_actual < 2.0:
-            escala_actual += 0.1
-            actualizar_zoom()
+    def aumentar_zoom(self, e):
+        if self.escala_actual < 2.0:
+            self.escala_actual += 0.1
+            self.actualizar_zoom()
             
-    def disminuir_zoom(e):
-        nonlocal escala_actual
-        if escala_actual > 0.5:
-            escala_actual -= 0.1
-            actualizar_zoom()
+    def disminuir_zoom(self, e):
+        if self.escala_actual > 0.5:
+            self.escala_actual -= 0.1
+            self.actualizar_zoom()
             
-    def restablecer_zoom(e):
-        nonlocal escala_actual
-        escala_actual = 1.0
-        actualizar_zoom()
+    def restablecer_zoom(self, e):
+        self.escala_actual = 1.0
+        self.actualizar_zoom()
         
-    def actualizar_zoom():
-        contenedor_area_juego.scale = escala_actual
-        texto_zoom.value = f"{int(escala_actual * 100)}%"
-        page.update()
+    def actualizar_zoom(self):
+        self.contenedor_area_juego.scale = self.escala_actual
+        self.texto_zoom.value = f"{int(self.escala_actual * 100)}%"
+        self.page.update()
 
-    def colocar_ficha_especial(e=None):
-        nonlocal turno_jugador
-        
-        # Pausar el timer durante el turno de la computadora
-        game_timer.stop()
+    def colocar_ficha_especial(self, e=None):
+        self.turno_jugador = False
+        self.game_timer.stop()
 
-        if turno_jugador:
-            # Reanudar el timer y retornar si es turno del jugador
-            game_timer.start()
+        if self.turno_jugador:
+            self.game_timer.start()
             return
 
-        numero_arriba = estado_juego.numero_arriba
-        numero_abajo = estado_juego.numero_abajo
+        numero_arriba = self.estado_juego.numero_arriba
+        numero_abajo = self.estado_juego.numero_abajo
         
         fichas_jugables_arriba = []
         fichas_jugables_abajo = []
         
-        for ficha in fichas_app:
+        for ficha in self.fichas_app:
             if ficha.numero1 == numero_arriba or ficha.numero2 == numero_arriba:
                 fichas_jugables_arriba.append((ficha, "app"))
             if ficha.numero1 == numero_abajo or ficha.numero2 == numero_abajo:
                 fichas_jugables_abajo.append((ficha, "app"))
         
-        for ficha in pozo:
+        for ficha in self.pozo:
             if ficha.numero1 == numero_arriba or ficha.numero2 == numero_arriba:
                 fichas_jugables_arriba.append((ficha, "pozo"))
             if ficha.numero1 == numero_abajo or ficha.numero2 == numero_abajo:
@@ -924,10 +991,10 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         todas_fichas_jugables = fichas_jugables_arriba + fichas_jugables_abajo
         
         if not todas_fichas_jugables:
-            if pozo:
-                ficha_nueva = pozo.pop(0)
-                fichas_app.append(ficha_nueva)
-                fichas_app_view.controls.append(
+            if self.pozo:
+                ficha_nueva = self.pozo.pop(0)
+                self.fichas_app.append(ficha_nueva)
+                self.fichas_app_view.controls.append(
                     ft.Container(
                         width=60,
                         height=120,
@@ -935,18 +1002,18 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
                         border_radius=5
                     )
                 )
-                for container in pozo_view.controls:
+                for container in self.pozo_view.controls:
                     if hasattr(container, 'actualizar'):
                         container.actualizar()
                 
                 mensaje = "La computadora ha tomado una ficha del pozo"
-                mostrar_mensaje(page, mensaje)
-                page.update()
+                self.mostrar_mensaje(mensaje)
+                self.page.update()
                 return
             else:
                 mensaje = "La computadora no tiene fichas para jugar y el pozo está vacío. Pasa."
-                game_timer.stop()
-                mostrar_mensaje(page, mensaje)
+                self.game_timer.stop()
+                self.mostrar_mensaje(mensaje)
                 return
         
         ficha_elegida, origen = random.choice(todas_fichas_jugables)
@@ -956,27 +1023,26 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
             if ficha_elegida.numero1 == numero_arriba:
                 ficha_elegida.numero1, ficha_elegida.numero2 = ficha_elegida.numero2, ficha_elegida.numero1
                 ficha_elegida.repr1, ficha_elegida.repr2 = ficha_elegida.repr2, ficha_elegida.repr1
-            estado_juego.numero_arriba = ficha_elegida.numero1
+            self.estado_juego.numero_arriba = ficha_elegida.numero1
         else:
             lado_a_jugar = "abajo"
             if ficha_elegida.numero2 == numero_abajo:
                 ficha_elegida.numero1, ficha_elegida.numero2 = ficha_elegida.numero2, ficha_elegida.numero1
                 ficha_elegida.repr1, ficha_elegida.repr2 = ficha_elegida.repr2, ficha_elegida.repr1
-            estado_juego.numero_abajo = ficha_elegida.numero2
+            self.estado_juego.numero_abajo = ficha_elegida.numero2
         
         if origen == "app":
-            fichas_app.remove(ficha_elegida)
-            if fichas_app_view.controls:
-                fichas_app_view.controls.pop()
+            self.fichas_app.remove(ficha_elegida)
+            if self.fichas_app_view.controls:
+                self.fichas_app_view.controls.pop()
         else:
-            pozo.remove(ficha_elegida)
-            for container in pozo_view.controls:
+            self.pozo.remove(ficha_elegida)
+            for container in self.pozo_view.controls:
                 if hasattr(container, 'actualizar'):
                     container.actualizar()
         
-        # Actualizar la representación de la ficha jugada según el modo inicial
-        ficha_elegida.repr1 = obtener_representacion_forzada(ficha_elegida.numero1, False)
-        ficha_elegida.repr2 = obtener_representacion_forzada(ficha_elegida.numero2, False)
+        ficha_elegida.repr1 = self.obtener_representacion_forzada(ficha_elegida.numero1, False)
+        ficha_elegida.repr2 = self.obtener_representacion_forzada(ficha_elegida.numero2, False)
         
         es_doble = ficha_elegida.numero1 == ficha_elegida.numero2
         
@@ -991,186 +1057,169 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         )
         
         if lado_a_jugar == "arriba":
-            indices_zonas = [i for i, control in enumerate(area_juego.controls) 
+            indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
                             if isinstance(control, ft.DragTarget)]
             if indices_zonas:
                 indice_actual = indices_zonas[0]
-                area_juego.controls[indice_actual] = ficha_visual
-                nueva_zona = crear_zona_destino(page, estado_juego, "arriba", on_ficha_jugada, area_juego, obtener_representacion_forzada)
-                area_juego.controls.insert(0, nueva_zona)
+                self.area_juego.controls[indice_actual] = ficha_visual
+                nueva_zona = self.crear_zona_destino("arriba")
+                self.area_juego.controls.insert(0, nueva_zona)
         else:
-            indices_zonas = [i for i, control in enumerate(area_juego.controls) 
+            indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
                             if isinstance(control, ft.DragTarget)]
             if indices_zonas:
                 indice_actual = indices_zonas[-1]
-                area_juego.controls[indice_actual] = ficha_visual
-                nueva_zona = crear_zona_destino(page, estado_juego, "abajo", on_ficha_jugada, area_juego, obtener_representacion_forzada)
-                area_juego.controls.append(nueva_zona)
+                self.area_juego.controls[indice_actual] = ficha_visual
+                nueva_zona = self.crear_zona_destino("abajo")
+                self.area_juego.controls.append(nueva_zona)
         
-        if len(fichas_app) == 0:
+        if len(self.fichas_app) == 0:
             mensaje = "¡La computadora ha ganado!"
-            mostrar_mensaje(page, mensaje)
+            self.mostrar_mensaje(mensaje)
         else:
-            # Cambiar el turno al jugador y actualizar el indicador
-            turno_jugador = True
-            actualizar_indicador_turno()
+            self.turno_jugador = True
+            self.actualizar_indicador_turno()
         
         origen_texto = "el pozo" if origen == "pozo" else "su mano"
         mensaje = f"La computadora ha jugado una ficha de {origen_texto}"
-        mostrar_mensaje(page, mensaje)
+        self.mostrar_mensaje(mensaje)
         
-        actualizar_zoom_automatico(area_juego, contenedor_area_juego, texto_zoom)
+        self.actualizar_zoom_automatico()
         
-        # Reanudar el timer después de que la computadora juegue
-        game_timer.start()
-        page.update()
+        self.game_timer.start()
+        self.page.update()
 
-    # Reducir la altura inicial del área de juego
-    area_juego = ft.Column(
-        controls=[],
-        alignment=ft.MainAxisAlignment.CENTER,
-        spacing=5,
-        scroll=ft.ScrollMode.AUTO,
-        height=400,  # Reducido de 700 a 400
-    )
+    def actualizar_indicador_turno(self):
+        if self.turno_jugador:
+            self.indicador_turno.bgcolor = colors.GREEN
+            self.texto_turno.value = "Tu turno"
+        else:
+            self.indicador_turno.bgcolor = colors.RED
+            self.texto_turno.value = "Turno PC"
+        self.page.update()
 
-    zona_arriba = crear_zona_destino(page, estado_juego, "arriba", on_ficha_jugada, area_juego, obtener_representacion_forzada)
-    zona_abajo = crear_zona_destino(page, estado_juego, "abajo", on_ficha_jugada, area_juego, obtener_representacion_forzada)
-    
-    es_ficha_central_doble = ficha_central.numero1 == ficha_central.numero2
-    
-    ficha_central_visual = (
-        crear_ficha_visual_horizontal(ficha_central.numero1, ficha_central.numero2, es_central=True, repr1=ficha_central.repr1, repr2=ficha_central.repr2)
-        if es_ficha_central_doble
-        else crear_ficha_visual(ficha_central.numero1, ficha_central.numero2, es_central=True, repr1=ficha_central.repr1, repr2=ficha_central.repr2)
-    )
+    def obtener_representacion_forzada(self, numero, es_para_jugador):
+        color, _ = COLORES_DOMINO[numero]
+        if self.modo_central_numeros:
+            return ("numero", str(numero)) if not es_para_jugador else ("color", color)
+        else:
+            return ("color", color) if not es_para_jugador else ("numero", str(numero))
 
-    area_juego.controls = [
-        zona_arriba,
-        ficha_central_visual,
-        zona_abajo
-    ]
+    def convertir_fichas_segun_modo(self, fichas, es_para_jugador):
+        for ficha in fichas:
+            ficha.repr1 = self.obtener_representacion_forzada(ficha.numero1, es_para_jugador)
+            ficha.repr2 = self.obtener_representacion_forzada(ficha.numero2, es_para_jugador)
+        return fichas
 
-    contenedor_area_juego = ft.Container(
-        content=area_juego,
-        height=350,  # Reducido de 600 a 350
-        border=ft.border.all(1, colors.GREY_400),
-        border_radius=5,
-        padding=5,
-        scale=escala_actual,
-        alignment=ft.alignment.center,
-        bgcolor="#1B4D3E"  
-    )
-    
-    texto_zoom = ft.Text("100%", size=14, weight=ft.FontWeight.BOLD)
-    
-    controles_zoom = ft.Row(
-        [texto_zoom],
-        alignment=ft.MainAxisAlignment.CENTER,
-        spacing=5,
-    )
+    def get_mensaje_ficha_inicial(self, quien_empieza, ficha, usa_numeros_central):
+        quien_txt = 'Tú empiezas' if quien_empieza == "jugador" else 'La computadora empieza'
+        
+        if usa_numeros_central:
+            return f"{quien_txt} con la ficha [{ficha.numero1}-{ficha.numero2}]"
+        else:
+            _, nombre_color1 = COLORES_DOMINO[ficha.numero1]
+            _, nombre_color2 = COLORES_DOMINO[ficha.numero2]
+            return f"{quien_txt} con la ficha [{nombre_color1}-{nombre_color2}]"
 
-    fichas_jugador_view = crear_fichas_jugador_row(fichas_jugador, estado_juego, page)
-    fichas_app_view = crear_fichas_app_row(len(fichas_app))
-    pozo_view = crear_pozo_column(pozo, agregar_ficha_del_pozo)
+    def crear_zona_destino(self, posicion):
+        def on_accept(e):
+            if not self.turno_jugador:
+                return False
+                
+            ficha = self.page.get_control(e.src_id).data
+            
+            if posicion == "arriba":
+                numero_a_comparar = self.estado_juego.numero_arriba
+                numero_valido = ficha.numero2 == numero_a_comparar
+                if numero_valido:
+                    self.estado_juego.numero_arriba = ficha.numero1
+            else:
+                numero_a_comparar = self.estado_juego.numero_abajo
+                numero_valido = ficha.numero1 == numero_a_comparar
+                if numero_valido:
+                    self.estado_juego.numero_abajo = ficha.numero2
+            
+            if numero_valido:
+                # Remover la ficha de la vista del jugador antes de procesarla
+                for control in self.fichas_jugador_view.controls[:]:
+                    if control.data.identificador == ficha.identificador:
+                        self.fichas_jugador_view.controls.remove(control)
+                        break
 
-    boton_jugar_oponente = ft.ElevatedButton(
-        text="Jugar oponente",
-        tooltip="Hacer jugar al oponente",
-        on_click=colocar_ficha_especial,
-        width=120,
-        height=40,
-        style=ft.ButtonStyle(
-            color=colors.WHITE,
-            bgcolor=colors.BLUE_700
-        )
-    )
+                self.estado_juego.fichas_jugadas.append(ficha)
+                
+                # Asegurar la representación correcta según el modo
+                ficha.repr1 = self.obtener_representacion_forzada(ficha.numero1, False)
+                ficha.repr2 = self.obtener_representacion_forzada(ficha.numero2, False)
+                
+                es_doble = ficha.numero1 == ficha.numero2
+                ficha_visual = (
+                    crear_ficha_visual_horizontal(ficha.numero1, ficha.numero2, 
+                                               repr1=ficha.repr1, repr2=ficha.repr2)
+                    if es_doble
+                    else crear_ficha_visual(ficha.numero1, ficha.numero2, 
+                                         repr1=ficha.repr1, repr2=ficha.repr2)
+                )
+                
+                if posicion == "arriba":
+                    indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
+                                   if isinstance(control, ft.DragTarget)]
+                    if indices_zonas:
+                        indice_actual = indices_zonas[0]
+                        self.area_juego.controls[indice_actual] = ficha_visual
+                        nueva_zona = self.crear_zona_destino("arriba")
+                        self.area_juego.controls.insert(0, nueva_zona)
+                else:
+                    indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
+                                   if isinstance(control, ft.DragTarget)]
+                    if indices_zonas:
+                        indice_actual = indices_zonas[-1]
+                        self.area_juego.controls[indice_actual] = ficha_visual
+                        nueva_zona = self.crear_zona_destino("abajo")
+                        self.area_juego.controls.append(nueva_zona)
 
-    # Crear el indicador de turno con la lógica invertida
-    texto_turno = ft.Text("Tu turno" if quien_empieza != "jugador" else "Turno PC", 
-                         color=colors.WHITE, weight=ft.FontWeight.BOLD, size=16)
-    indicador_turno = ft.Container(
-        content=texto_turno,
-        width=100,
-        height=40,
-        bgcolor=colors.GREEN if quien_empieza != "jugador" else colors.RED,
-        border_radius=5,
-        alignment=ft.alignment.center,
-        margin=ft.margin.only(bottom=10)
-    )
+                self.turno_jugador = False
+                self.actualizar_indicador_turno()
+                self.actualizar_zoom_automatico()
+                
+                if len(self.fichas_jugador_view.controls) == 0:
+                    mensaje = "¡Has ganado!"
+                    self.mostrar_mensaje(mensaje)
+                elif not self.turno_jugador:
+                    threading.Timer(4.0, self.colocar_ficha_especial).start()
+                
+                self.page.update()
+                return True
+            return False
 
-    timer_container = ft.Container(
-        content=timer_text,
-        bgcolor=colors.BLUE_GREY_900,
-        padding=10,
-        border_radius=5,
-        margin=ft.margin.only(bottom=10)
-    )
-
-    page.add(
-        ft.Container(
-            content=ft.Row(
-                [
-                    ft.Container(
-                        content=ft.Column(
-                            [
-                                pozo_view,
-                                timer_container,  # Añadir el cronómetro
-                                volver_button
-                            ],
-                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                            spacing=10,
+        return ft.DragTarget(
+            content=ft.Container(
+                width=50,
+                height=100,
+                border=ft.border.all(2, colors.GREY_400),
+                border_radius=5,
+                bgcolor="#E0E0E033",
+                content=ft.Column(
+                    controls=[
+                        ft.Container(
+                            height=50,
+                            width=50,
+                            border=ft.border.all(1, colors.GREY_400)
                         ),
-                        alignment=ft.alignment.center_left,
-                        width=140,
-                        margin=0,
-                    ),
-                    ft.Container(
-                        content=ft.Column(
-                            [
-                                titulo,
-                                ft.Container(
-                                    content=fichas_app_view,
-                                    padding=2,
-                                    height=100,
-                                ),
-                                ft.Container(
-                                    content=boton_jugar_oponente,
-                                    alignment=ft.alignment.center,
-                                    padding=5,
-                                ),
-                                contenedor_area_juego,  # Tablero reducido
-                                indicador_turno,  # Añadir el indicador de turno
-                                controles_zoom,
-                                ft.Container(
-                                    content=fichas_jugador_view,
-                                    padding=2,
-                                    height=200,  # Aumentado de 150 a 200 para dar más espacio a las fichas del usuario
-                                ),
-                            ],
-                            alignment=ft.MainAxisAlignment.START,
-                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                            spacing=5,
-                        ),
-                        expand=True,
-                        margin=ft.margin.only(right=10),
-                        padding=0,
-                    ),
-                ],
-                expand=True,
-                spacing=0,
-                alignment=ft.MainAxisAlignment.START,
+                        ft.Container(
+                            height=50,
+                            width=50,
+                            border=ft.border.all(1, colors.GREY_400)
+                        )
+                    ],
+                    spacing=0,
+                )
             ),
-            expand=True,
+            on_accept=on_accept
         )
-    )
 
-    # Si es turno del PC (el jugador puso la ficha central), hacer que juegue automáticamente
-    if not turno_jugador:
-        threading.Timer(4.0, colocar_ficha_especial).start()
-        
-    actualizar_zoom_automatico(area_juego, contenedor_area_juego, texto_zoom)
-    page.update()
+def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
+    juego = JuegoPrincipiante(page, volver_al_menu_principal)
 
 
 
