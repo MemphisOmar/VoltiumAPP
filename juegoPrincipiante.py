@@ -787,8 +787,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         contenedor_area_juego.page.update()
 
     def on_ficha_jugada(ficha, lado):
-        nonlocal turno_jugador  # Declarar turno_jugador como nonlocal
-        
+        nonlocal turno_jugador
         # Actualizar la representación de la ficha jugada según el modo inicial
         ficha.repr1 = obtener_representacion_forzada(ficha.numero1, False)
         ficha.repr2 = obtener_representacion_forzada(ficha.numero2, False)
@@ -838,7 +837,11 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         actualizar_indicador_turno()
         page.update()
 
-        page.after(2000, lambda _: colocar_ficha_especial())
+        # Usar threading.Timer en lugar de window.after
+        if not turno_jugador:
+            threading.Timer(4.0, colocar_ficha_especial).start()
+        
+        page.update()
 
     def agregar_ficha_del_pozo(ficha):
         if ficha in pozo:
@@ -891,8 +894,13 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
 
     def colocar_ficha_especial(e=None):
         nonlocal turno_jugador
+        
+        # Pausar el timer durante el turno de la computadora
+        game_timer.stop()
 
         if turno_jugador:
+            # Reanudar el timer y retornar si es turno del jugador
+            game_timer.start()
             return
 
         numero_arriba = estado_juego.numero_arriba
@@ -1012,6 +1020,9 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         mostrar_mensaje(page, mensaje)
         
         actualizar_zoom_automatico(area_juego, contenedor_area_juego, texto_zoom)
+        
+        # Reanudar el timer después de que la computadora juegue
+        game_timer.start()
         page.update()
 
     # Reducir la altura inicial del área de juego
@@ -1156,7 +1167,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
 
     # Si es turno del PC (el jugador puso la ficha central), hacer que juegue automáticamente
     if not turno_jugador:
-        page.after(2000, lambda _: colocar_ficha_especial())
+        threading.Timer(4.0, colocar_ficha_especial).start()
         
     actualizar_zoom_automatico(area_juego, contenedor_area_juego, texto_zoom)
     page.update()
