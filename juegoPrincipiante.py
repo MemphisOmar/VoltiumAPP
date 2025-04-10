@@ -708,7 +708,7 @@ class JuegoPrincipiante:
         self.fichas_app_view = crear_fichas_app_row(len(self.fichas_app))
         self.pozo_view = crear_pozo_column(self.pozo, self.agregar_ficha_del_pozo)
         self.boton_jugar_oponente = ft.ElevatedButton(
-            text="Jugar oponente",
+            text="Pasar Turno",
             tooltip="Hacer jugar al oponente",
             on_click=self.colocar_ficha_especial,
             width=120,
@@ -794,7 +794,7 @@ class JuegoPrincipiante:
             )
         )
         if not self.turno_jugador:
-            threading.Timer(4.0, self.colocar_ficha_especial).start()
+            threading.Timer(2.0, self.colocar_ficha_especial).start()
         self.actualizar_zoom_automatico()
         self.page.update()
         self.iniciar_temporizador()
@@ -913,7 +913,7 @@ class JuegoPrincipiante:
         self.page.update()
 
         if not self.turno_jugador:
-            threading.Timer(4.0, self.colocar_ficha_especial).start()
+            threading.Timer(2.0, self.colocar_ficha_especial).start()
         
         self.page.update()
 
@@ -924,6 +924,8 @@ class JuegoPrincipiante:
             ficha.repr2 = self.obtener_representacion_forzada(ficha.numero2, True)
             self.fichas_jugador.append(ficha)
             self.fichas_jugador_view.controls.append(crear_ficha_visual_jugador(ficha))
+            mensaje = f"Quedan {len(self.pozo)} fichas en el pozo"
+            self.mostrar_mensaje(mensaje)
             self.page.update()
 
     def mostrar_mensaje(self, mensaje):
@@ -1006,7 +1008,7 @@ class JuegoPrincipiante:
                     if hasattr(container, 'actualizar'):
                         container.actualizar()
                 
-                mensaje = "La computadora ha tomado una ficha del pozo"
+                mensaje = f"La computadora ha tomado una ficha del pozo. Quedan {len(self.pozo)} fichas"
                 self.mostrar_mensaje(mensaje)
                 self.page.update()
                 return
@@ -1081,7 +1083,10 @@ class JuegoPrincipiante:
             self.actualizar_indicador_turno()
         
         origen_texto = "el pozo" if origen == "pozo" else "su mano"
-        mensaje = f"La computadora ha jugado una ficha de {origen_texto}"
+        if origen == "pozo":
+            mensaje = f"La computadora ha jugado una ficha del pozo. Quedan {len(self.pozo)} fichas"
+        else:
+            mensaje = "La computadora ha jugado una ficha de su mano"
         self.mostrar_mensaje(mensaje)
         
         self.actualizar_zoom_automatico()
@@ -1186,7 +1191,7 @@ class JuegoPrincipiante:
                     mensaje = "¡Has ganado!"
                     self.mostrar_mensaje(mensaje)
                 elif not self.turno_jugador:
-                    threading.Timer(4.0, self.colocar_ficha_especial).start()
+                    threading.Timer(2.0, self.colocar_ficha_especial).start()
                 
                 self.page.update()
                 return True
