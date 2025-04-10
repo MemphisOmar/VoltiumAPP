@@ -107,9 +107,8 @@ def repartir_fichas():
     Reparte las fichas entre jugador, aplicación y pozo
     """
     global fichas_disponibles
-    # Asegurarnos de que las fichas estén inicializadas
-    if not fichas_disponibles:
-        fichas_disponibles = crear_fichas_domino()
+    # Reiniciar las fichas disponibles al comenzar un nuevo juego
+    fichas_disponibles = crear_fichas_domino()
     
     # Crear una copia de las fichas disponibles para manipular
     fichas_temp = fichas_disponibles.copy()
@@ -117,8 +116,6 @@ def repartir_fichas():
     # Repartir 7 fichas para el jugador
     fichas_jugador = []
     for _ in range(7):
-        if not fichas_temp:  # Si se acabaron las fichas, crear nuevas
-            fichas_temp = crear_fichas_domino()
         ficha = random.choice(fichas_temp)
         fichas_jugador.append(ficha)
         fichas_temp.remove(ficha)
@@ -126,23 +123,14 @@ def repartir_fichas():
     # Repartir 7 fichas para la aplicación
     fichas_app = []
     for _ in range(7):
-        if not fichas_temp:  # Si se acabaron las fichas, crear nuevas
-            fichas_temp = crear_fichas_domino()
         ficha = random.choice(fichas_temp)
         fichas_app.append(ficha)
         fichas_temp.remove(ficha)
     
     # Las fichas restantes serán el pozo
-    pozo = fichas_temp.copy() if fichas_temp else []
+    pozo = fichas_temp.copy()
     
-    # Si el pozo está vacío, crear algunas fichas adicionales
-    if not pozo:
-        pozo_adicional = crear_fichas_domino()
-        # Eliminar las fichas que ya tiene el jugador o la aplicación
-        ids_asignados = [f.identificador for f in fichas_jugador + fichas_app]
-        pozo = [f for f in pozo_adicional if f.identificador not in ids_asignados]
-    
-    # Actualizar las fichas disponibles globales (quitar las que se repartieron)
+    # Actualizar las fichas disponibles globales
     fichas_disponibles = pozo.copy()
     
     return fichas_jugador, fichas_app, pozo
