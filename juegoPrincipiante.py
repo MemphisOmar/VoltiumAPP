@@ -1,9 +1,43 @@
 import flet as ft
 from ayuda import mostrar_ayuda
 import random
+import time
+import threading
 from flet import (
     colors
 )
+
+class Timer:
+    def __init__(self):
+        self.start_time = None
+        self.total_time = 0
+        self.is_running = False
+
+    def start(self):
+        if not self.is_running:
+            self.start_time = time.time()
+            self.is_running = True
+
+    def stop(self):
+        if self.is_running:
+            self.total_time += time.time() - self.start_time
+            self.is_running = False
+
+    def reset(self):
+        self.start_time = None
+        self.total_time = 0
+        self.is_running = False
+
+    def get_current_time(self):
+        if not self.is_running:
+            return self.total_time
+        return self.total_time + (time.time() - self.start_time)
+
+    def get_time_string(self):
+        current_time = self.get_current_time()
+        minutes = int(current_time // 60)
+        seconds = int(current_time % 60)
+        return f"{minutes:02d}:{seconds:02d}"
 
 # Diccionario de colores y sus números correspondientes
 COLORES_DOMINO = {
@@ -549,6 +583,26 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
     global fichas_disponibles
     fichas_disponibles = crear_fichas_domino()
     
+    # Inicializar el cronómetro
+    game_timer = Timer()
+    timer_text = ft.Text("00:00", color=colors.WHITE, size=20, weight=ft.FontWeight.BOLD)
+    
+    def update_timer():
+        if game_timer.is_running:
+            timer_text.value = game_timer.get_time_string()
+            page.update()
+            # Schedule next update in 1 second
+            threading.Timer(1.0, update_timer).start()
+    
+    # Iniciar el cronómetro y el timer
+    game_timer.start()
+    threading.Timer(1.0, update_timer).start()
+    
+    def volver_al_menu_principal_click(e):
+        global fichas_disponibles
+        fichas_disponibles = crear_fichas_domino()
+        volver_al_menu_principal(page)
+
     modo_central_numeros = random.choice([True, False])
     
     modo_mensaje = ("El tablero central mostrará números y tus fichas colores" 
@@ -589,6 +643,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         return fichas
 
     def volver_al_menu_principal_click(e):
+        game_timer.stop()  # Detener el cronómetro al volver al menú
         global fichas_disponibles
         fichas_disponibles = crear_fichas_domino()
         volver_al_menu_principal(page)
@@ -795,6 +850,9 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
             page.update()
 
     def mostrar_mensaje(page, mensaje):
+        # Detener el timer si hay mensaje de victoria
+        if "ganado" in mensaje:
+            game_timer.stop()
         dlg = ft.AlertDialog(
             content=ft.Text(mensaje),
             actions=[
@@ -832,12 +890,11 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         page.update()
 
     def colocar_ficha_especial(e=None):
-        nonlocal turno_jugador  # Declarar turno_jugador como nonlocal
-        
-        # Si es el turno del jugador, no hacer nada
+        nonlocal turno_jugador
+
         if turno_jugador:
             return
-            
+
         numero_arriba = estado_juego.numero_arriba
         numero_abajo = estado_juego.numero_abajo
         
@@ -880,6 +937,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
                 return
             else:
                 mensaje = "La computadora no tiene fichas para jugar y el pozo está vacío. Pasa."
+                game_timer.stop()
                 mostrar_mensaje(page, mensaje)
                 return
         
@@ -1030,6 +1088,14 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
         margin=ft.margin.only(bottom=10)
     )
 
+    timer_container = ft.Container(
+        content=timer_text,
+        bgcolor=colors.BLUE_GREY_900,
+        padding=10,
+        border_radius=5,
+        margin=ft.margin.only(bottom=10)
+    )
+
     page.add(
         ft.Container(
             content=ft.Row(
@@ -1038,6 +1104,7 @@ def configurar_ventana_domino(page: ft.Page, volver_al_menu_principal):
                         content=ft.Column(
                             [
                                 pozo_view,
+                                timer_container,  # Añadir el cronómetro
                                 volver_button
                             ],
                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
