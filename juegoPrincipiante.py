@@ -597,6 +597,13 @@ class JuegoPrincipiante:
         self.fichas_jugador = self.convertir_fichas_segun_modo(self.fichas_jugador, True)
         self.fichas_app = self.convertir_fichas_segun_modo(self.fichas_app, False)
         self.ficha_central, self.quien_empieza = encontrar_ficha_inicial(self.fichas_jugador, self.fichas_app)
+        
+        # Eliminar la ficha inicial de las fichas del jugador si el jugador empieza
+        if self.quien_empieza == "jugador":
+            self.fichas_jugador = [f for f in self.fichas_jugador if f.identificador != self.ficha_central.identificador]
+        elif self.quien_empieza == "app":
+            self.fichas_app = [f for f in self.fichas_app if f.identificador != self.ficha_central.identificador]
+
         self.turno_jugador = self.quien_empieza != "jugador"
         self.estado_juego = EstadoJuego(self.ficha_central)
         self.page.clean()
