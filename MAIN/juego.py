@@ -370,7 +370,7 @@ def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego, volver_al_menu
                 controls=[
                     texto_cronometro,  # Añadir el cronómetro
                      ft.Image(
-                        src="resistor_facil.png",
+                        src="MAIN/resistor_facil.png",
                         width=400,
                         height=200,
                         fit=ft.ImageFit.CONTAIN
@@ -484,7 +484,7 @@ def configurar_ventana_medio(page: ft.Page, volver_al_menu_juego, volver_al_menu
         ft.Container(
             content=ft.Column(
                 [
-                    ft.Image(src="resistor_medio.png"),
+                    ft.Image(src="MAIN/resistor_medio.png"),
                     ft.Container( 
                         content=ft.Text(str(numero_random), size=24, color=colors.BLACK), 
                         alignment=ft.alignment.center, 
@@ -606,7 +606,7 @@ def configurar_ventana_dificil(page: ft.Page, volver_al_menu_juego, volver_al_me
         ft.Container(
             content=ft.Column(
                 [
-                    ft.Image(src="resistor_dificil.png"),
+                    ft.Image(src="MAIN/resistor_dificil.png"),
                     ft.Container( 
                         content=ft.Text(str(numero_random), size=24, color=colors.BLACK), 
                         alignment=ft.alignment.center, 

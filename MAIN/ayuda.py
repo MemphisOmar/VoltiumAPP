@@ -1,53 +1,67 @@
 import flet as ft
 import webbrowser
 
-from flet import (
-    Page,
-    colors
-)
-
 def mostrar_ayuda(page: ft.Page):
-    def cerrar_dialogo(e):
-        page.dialog.open = False
+    def regresar_menu(e):
+        dlg.open = False
         page.update()
+        from MAIN.APP import main
+        main(page)
 
     def mostrar_codigo_colores(e):
-        page.dialog.open = False  # Close the current dialog first
-        page.update()
-        
-        page.dialog = ft.AlertDialog(
-            modal=True,  # Make dialog modal
-            title=ft.Text("Código de Colores"),
-            content=ft.Image(src="Resistencia.png", fit=ft.ImageFit.CONTAIN),
-            actions=[
-                ft.TextButton("Cerrar", on_click=cerrar_dialogo)
-            ],
-            bgcolor=colors.GREY_300
-        )
-        page.dialog.open = True
+        contenido_ayuda.content = ft.Column([
+            ft.Image(src="MAIN/Resistencia.png", width=400, height=400, fit=ft.ImageFit.CONTAIN),
+            ft.ElevatedButton("Regresar", on_click=lambda e: mostrar_menu_ayuda(e))
+        ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
         page.update()
 
     def abrir_explicacion(e):
         webbrowser.open("https://www.youtube.com/shorts/nbPFl_Icn78")
+        
+    def mostrar_menu_ayuda(e):
+        contenido_ayuda.content = ft.Column([
+            ft.Text("¿Qué tipo de ayuda necesita?", size=20, weight=ft.FontWeight.BOLD),
+            ft.ElevatedButton(
+                "Código de Colores",
+                on_click=mostrar_codigo_colores,
+                width=200,
+                height=50,
+                color="white",
+                bgcolor="#29c589"
+            ),
+            ft.ElevatedButton(
+                "Video Explicativo",
+                on_click=abrir_explicacion,
+                width=200,
+                height=50,
+                color="white",
+                bgcolor="#29c589"
+            ),
+            ft.ElevatedButton(
+                "Regresar al Menú",
+                on_click=regresar_menu,
+                width=200,
+                height=50,
+                color="white",
+                bgcolor="#29c589"
+            )
+        ], spacing=20, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+        page.update()
 
-    page.dialog = ft.AlertDialog(
-        modal=True,  # Make dialog modal
-        title=ft.Text("Ayuda del juego", size=24, text_align=ft.TextAlign.CENTER),
-        content=ft.Container(
-            content=ft.Column([
-                ft.Text("¿Qué tipo de ayuda necesita?", size=20, text_align=ft.TextAlign.CENTER),
-                ft.Row([
-                    ft.TextButton("Código de Colores", on_click=mostrar_codigo_colores),
-                    ft.TextButton("Video Explicativo", on_click=abrir_explicacion)
-                ], alignment=ft.MainAxisAlignment.CENTER)
-            ], alignment=ft.MainAxisAlignment.CENTER),
-            padding=20
-        ),
-        actions=[
-            ft.TextButton("Cerrar", on_click=cerrar_dialogo)
-        ],
-        actions_alignment=ft.MainAxisAlignment.END,
-        bgcolor=colors.GREY_300
+    contenido_ayuda = ft.Container(
+        content=None,
+        padding=20,
+        width=500,
+        bgcolor="#88B98A",
+        border_radius=10
     )
-    page.dialog.open = True
+
+    dlg = ft.AlertDialog(
+        content=contenido_ayuda,
+        modal=True
+    )
+
+    page.dialog = dlg
+    dlg.open = True
+    mostrar_menu_ayuda(None)
     page.update()

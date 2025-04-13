@@ -43,7 +43,8 @@ def main(page: ft.Page):
 
     def ayuda_click(e):
         if page.app_running:
-            mostrar_ayuda(page)  # Removed page.clean() as it was clearing the main window
+            page.clean()
+            mostrar_ayuda(page)
             page.update()
 
     def salir_click(e):
@@ -58,7 +59,7 @@ def main(page: ft.Page):
         ft.Container(
             content=ft.Column(
                 [
-                    ft.Image(src="Voltium_LOGO2.png")
+                    ft.Image(src="MAIN/Voltium_LOGO2.png")
                 ],
                 alignment=ft.MainAxisAlignment.CENTER,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,  
