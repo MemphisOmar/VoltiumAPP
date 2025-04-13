@@ -37,11 +37,14 @@ def main(page: ft.Page):
 
     def jugar_click(e):
         if page.app_running:
+            page.clean()
             configurar_ventana_juego(page, main)
+            page.update()
 
     def ayuda_click(e):
         if page.app_running:
-            mostrar_ayuda(page)  #Llamar a la subrutina desde ayuda.py
+            mostrar_ayuda(page)  # Removed page.clean() as it was clearing the main window
+            page.update()
 
     def salir_click(e):
         page.app_running = False

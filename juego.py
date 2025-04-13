@@ -181,7 +181,8 @@ def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego, volver_al_menu
     texto_cronometro = ft.Text("Tiempo: 00:00", size=20, color=colors.BLACK)
 
     def volver_al_menu_click(e):
-        finalizar_juego()
+        page.clean()
+        volver_al_menu_juego(page, volver_al_menu_principal)
 
     # Añadir el texto del cronómetro a la interfaz
     texto_cronometro = ft.Text("Tiempo: 00:00", size=20, color=colors.BLACK)
@@ -342,7 +343,7 @@ def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego, volver_al_menu
     # Botón de verificación
     boton_verificar = ft.ElevatedButton(
         text="Verificar respuesta",
-        on_click=lambda _: verificar_respuesta()
+        on_click=verificar_respuesta
     )
 
     # Botón para volver al menú
@@ -380,23 +381,22 @@ def configurar_ventana_facil(page: ft.Page, volver_al_menu_juego, volver_al_menu
                     drop_targets_row,
                     ft.Container(height=20),
                     ft.Row(
-                        controls=[boton_verificar, boton_reiniciar],
+                        controls=[boton_verificar, boton_reiniciar, boton_volver],
                         alignment=ft.MainAxisAlignment.CENTER,
                         spacing=20
                     ),
-                    boton_volver
                 ],
                 alignment=ft.MainAxisAlignment.START,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
             expand=True,
             alignment=ft.alignment.top_center,
-            width=1024,
-            height=768
+            padding=20
         )
     )
     
     page.update()
+    update_cronometro(None)  # Start the timer
 
 def configurar_ventana_medio(page: ft.Page, volver_al_menu_juego, volver_al_menu_principal):
     def volver_al_menu_click(e):
