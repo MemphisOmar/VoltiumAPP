@@ -1,5 +1,27 @@
 # VOLTIUM APP
 
+An educational app designed to help engineering students learn basic concepts like resistor color codes through interactive games. Currently in development.
+
+## Technologies
+- Python with Flet framework for modern UI
+- SQLite for score tracking
+- Threading for game timers
+- Custom drag-and-drop interface
+
+## Features
+- Multiple difficulty levels for learning resistor color codes
+- Interactive gameplay with real-time feedback
+- Score tracking system
+- Built-in help section with video tutorials
+- Beginner-friendly interface with color-based learning
+
+## Status
+Currently in development with the following modes:
+- Beginner Mode: Color matching game
+- Easy Mode: Basic resistor color code practice
+- Medium/Hard Modes: Coming soon
+
+The app aims to make learning engineering fundamentals more engaging and accessible through gamification.
 ## MAIN MENU
 ![Image](https://github.com/user-attachments/assets/7ccdb290-f63d-4d78-93ab-5dbc8d01e552)
 ## GAME MODES
