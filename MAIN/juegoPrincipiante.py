@@ -384,6 +384,8 @@ def crear_zona_destino(page: ft.Page, estado_juego, posicion, on_ficha_jugada, a
                     area_juego.controls[indice_actual] = ficha_visual
                     nueva_zona = crear_zona_destino(page, estado_juego, "arriba", on_ficha_jugada, area_juego, obtener_representacion_forzada)
                     area_juego.controls.insert(0, nueva_zona)
+                    # Mantener centradas las fichas después de agregar una nueva
+                    area_juego.horizontal_alignment = ft.CrossAxisAlignment.CENTER
             else:
                 indices_zonas = [i for i, control in enumerate(area_juego.controls) 
                                if isinstance(control, ft.DragTarget)]
@@ -392,6 +394,8 @@ def crear_zona_destino(page: ft.Page, estado_juego, posicion, on_ficha_jugada, a
                     area_juego.controls[indice_actual] = ficha_visual
                     nueva_zona = crear_zona_destino(page, estado_juego, "abajo", on_ficha_jugada, area_juego, obtener_representacion_forzada)
                     area_juego.controls.append(nueva_zona)
+                    # Mantener centradas las fichas después de agregar una nueva
+                    area_juego.horizontal_alignment = ft.CrossAxisAlignment.CENTER
             
             page.update()
             return True
@@ -418,6 +422,8 @@ def crear_zona_destino(page: ft.Page, estado_juego, posicion, on_ficha_jugada, a
                     )
                 ],
                 spacing=0,
+                alignment=ft.MainAxisAlignment.CENTER,  # Centrar verticalmente
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,  # Centrar horizontalmente
             )
         ),
         on_accept=on_accept
@@ -665,9 +671,11 @@ class JuegoPrincipiante:
         self.dlg.open = True
         self.area_juego = ft.Column(
             controls=[],
-            alignment=ft.MainAxisAlignment.CENTER,
+            alignment=ft.MainAxisAlignment.CENTER,  # Alineación vertical al centro
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,  # Alineación horizontal al centro
             spacing=5,
-            scroll=ft.ScrollMode.AUTO,
+            # Cambiamos NONE (que no existe) por AUTO y establecemos el valor a False directamente
+            scroll=False,  # Deshabilitamos el scroll en esta columna
             height=400,
         )
         self.zona_arriba = self.crear_zona_destino("arriba")
@@ -683,22 +691,61 @@ class JuegoPrincipiante:
             self.ficha_central_visual,
             self.zona_abajo
         ]
-        self.contenedor_area_juego = ft.Container(
+        
+        # Contenedor interno escalable con tamaño adaptable
+        self.area_juego_escalable = ft.Container(
             content=self.area_juego,
-            height=350,
+            scale=self.escala_actual,
+            alignment=ft.alignment.center,  # Centrar el contenido
+            expand=True,
+        )
+        
+        # Contenedor fijo con capacidad de scroll
+        self.contenedor_area_juego_fijo = ft.Container(
+            content=ft.Column(
+                [self.area_juego_escalable],
+                scroll=ft.ScrollMode.AUTO,  # Mantenemos el scroll aquí
+                expand=True,
+                alignment=ft.MainAxisAlignment.CENTER,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
+            height=360,  # Reducido de 400 a 360
+            width=500,
             border=ft.border.all(1, colors.GREY_400),
             border_radius=5,
             padding=5,
-            scale=self.escala_actual,
-            alignment=ft.alignment.center,
-            bgcolor="#1B4D3E"  
+            bgcolor="#1B4D3E",
+            clip_behavior=ft.ClipBehavior.HARD_EDGE,
+            alignment=ft.alignment.center,  # Centrar todo el contenido dentro del contenedor
         )
+        
         self.texto_zoom = ft.Text("100%", size=14, weight=ft.FontWeight.BOLD)
         self.controles_zoom = ft.Row(
-            [self.texto_zoom],
+            [
+                ft.IconButton(
+                    icon=ft.icons.ZOOM_OUT,
+                    icon_color=colors.WHITE,
+                    on_click=self.disminuir_zoom,
+                    tooltip="Alejar"
+                ),
+                self.texto_zoom,
+                ft.IconButton(
+                    icon=ft.icons.ZOOM_IN,
+                    icon_color=colors.WHITE,
+                    on_click=self.aumentar_zoom,
+                    tooltip="Acercar"
+                ),
+                ft.IconButton(
+                    icon=ft.icons.REFRESH,
+                    icon_color=colors.WHITE,
+                    on_click=self.restablecer_zoom,
+                    tooltip="Restablecer zoom"
+                )
+            ],
             alignment=ft.MainAxisAlignment.CENTER,
             spacing=5,
         )
+        
         self.fichas_jugador_view = crear_fichas_jugador_row(self.fichas_jugador, self.estado_juego, self.page)
         self.fichas_app_view = crear_fichas_app_row(len(self.fichas_app))
         self.pozo_view = crear_pozo_column(self.pozo, self.agregar_ficha_del_pozo)
@@ -718,11 +765,11 @@ class JuegoPrincipiante:
         self.indicador_turno = ft.Container(
             content=self.texto_turno,
             width=100,
-            height=40,
+            height=35,  # Reducido de 40 a 35
             bgcolor=colors.GREEN if self.quien_empieza != "jugador" else colors.RED,
             border_radius=5,
             alignment=ft.alignment.center,
-            margin=ft.margin.only(bottom=10)
+            margin=ft.margin.only(bottom=5)  # Reducido de 10 a 5
         )
         self.timer_container = ft.Container(
             content=self.timer_text,
@@ -756,25 +803,29 @@ class JuegoPrincipiante:
                                     ft.Container(
                                         content=self.fichas_app_view,
                                         padding=2,
-                                        height=100,
+                                        height=90,  # Reducido de 100 a 90
                                     ),
                                     ft.Container(
                                         content=self.boton_jugar_oponente,
                                         alignment=ft.alignment.center,
-                                        padding=5,
+                                        padding=3,  # Reducido de 5 a 3
                                     ),
-                                    self.contenedor_area_juego,
-                                    self.indicador_turno,
-                                    self.controles_zoom,
+                                    self.contenedor_area_juego_fijo,  # Este contenedor se modificará abajo
+                                    ft.Row(
+                                        [self.indicador_turno, self.controles_zoom],
+                                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                                        spacing=5,
+                                    ),  # Unir elementos para ahorrar espacio
                                     ft.Container(
                                         content=self.fichas_jugador_view,
                                         padding=2,
-                                        height=200,
+                                        height=180,  # Ajustado de 200 a 180 para compactar
+                                        margin=ft.margin.only(top=10),  # Añadir margen superior
                                     ),
                                 ],
                                 alignment=ft.MainAxisAlignment.START,
                                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                                spacing=5,
+                                spacing=3,  # Reducido de 5 a 3
                             ),
                             expand=True,
                             margin=ft.margin.only(right=10),
@@ -786,6 +837,7 @@ class JuegoPrincipiante:
                     alignment=ft.MainAxisAlignment.START,
                 ),
                 expand=True,
+                margin=ft.margin.only(bottom=20),  # Añadir margen inferior para empujar todo hacia arriba
             )
         )
         if not self.turno_jugador:
@@ -851,14 +903,68 @@ class JuegoPrincipiante:
         elif num_fichas <= 12:
             return 0.40
         else:
-            return 0.6
+            return 0.25
 
     def actualizar_zoom_automatico(self):
         nuevo_zoom = self.calcular_zoom_automatico()
-        self.contenedor_area_juego.scale = nuevo_zoom
+        # Actualizar el zoom del contenido
+        self.area_juego_escalable.scale = nuevo_zoom
         self.texto_zoom.value = f"{int(nuevo_zoom * 100)}%"
-        self.contenedor_area_juego.page.update()
+        
+        # Ajustar el tamaño del área de juego según el zoom
+        self.ajustar_tamano_area_juego(nuevo_zoom)
+        self.page.update()
 
+    def aumentar_zoom(self, e):
+        if self.escala_actual < 2.0:
+            self.escala_actual += 0.1
+            self.actualizar_zoom()
+            
+    def disminuir_zoom(self, e):
+        if self.escala_actual > 0.1:
+            self.escala_actual -= 0.1
+            self.actualizar_zoom()
+            
+    def restablecer_zoom(self, e):
+        self.escala_actual = 1.0
+        self.actualizar_zoom()
+        
+    def actualizar_zoom(self):
+        # Actualizar el zoom del área de juego escalable
+        self.area_juego_escalable.scale = self.escala_actual
+        self.texto_zoom.value = f"{int(self.escala_actual * 100)}%"
+        
+        # Ajustar el tamaño del área de juego según el zoom
+        self.ajustar_tamano_area_juego(self.escala_actual)
+        self.page.update()
+    
+    def ajustar_tamano_area_juego(self, zoom_level):
+        """
+        Ajusta el tamaño del área de juego basado en el nivel de zoom
+        para asegurar que todo el contenido sea visible.
+        """
+        # Calcular un factor de expansión inverso al zoom
+        # Cuando zoom es más pequeño (alejar), el área debe expandirse más
+        num_fichas = len([c for c in self.area_juego.controls if not isinstance(c, ft.DragTarget)])
+        
+        # Calcular ancho base según el número de fichas horizontales
+        base_width = max(500, num_fichas * 50)  # Ancho mínimo de 500px
+        
+        # El ancho y alto se ajustan inversamente al zoom para mostrar más contenido cuando se aleja
+        if zoom_level < 1.0:
+            # Ajustar dimensiones para mostrar más contenido a menor zoom
+            self.area_juego.width = base_width / zoom_level
+            
+            # Si hay muchas fichas, permitir que sea más alto
+            if num_fichas > 10:
+                self.area_juego.height = 600 / zoom_level
+            else:
+                self.area_juego.height = 400 / zoom_level
+        else:
+            # En zoom normal o aumentado, mantener dimensiones estándar
+            self.area_juego.width = base_width
+            self.area_juego.height = 400
+    
     def on_ficha_jugada(self, ficha, lado):
         self.turno_jugador = False
         ficha.repr1 = self.obtener_representacion_forzada(ficha.numero1, False)
@@ -887,6 +993,8 @@ class JuegoPrincipiante:
                 self.area_juego.controls[indice_actual] = ficha_visual
                 nueva_zona = self.crear_zona_destino("arriba")
                 self.area_juego.controls.insert(0, nueva_zona)
+                # Mantener centradas las fichas después de agregar una nueva
+                self.area_juego.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         else:
             indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
                              if isinstance(control, ft.DragTarget)]
@@ -895,6 +1003,8 @@ class JuegoPrincipiante:
                 self.area_juego.controls[indice_actual] = ficha_visual
                 nueva_zona = self.crear_zona_destino("abajo")
                 self.area_juego.controls.append(nueva_zona)
+                # Mantener centradas las fichas después de agregar una nueva
+                self.area_juego.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         
         self.actualizar_zoom_automatico()
         
@@ -946,7 +1056,7 @@ class JuegoPrincipiante:
             self.actualizar_zoom()
             
     def disminuir_zoom(self, e):
-        if self.escala_actual > 0.5:
+        if self.escala_actual > 0.1:
             self.escala_actual -= 0.1
             self.actualizar_zoom()
             
@@ -954,11 +1064,6 @@ class JuegoPrincipiante:
         self.escala_actual = 1.0
         self.actualizar_zoom()
         
-    def actualizar_zoom(self):
-        self.contenedor_area_juego.scale = self.escala_actual
-        self.texto_zoom.value = f"{int(self.escala_actual * 100)}%"
-        self.page.update()
-
     def colocar_ficha_especial(self, e=None):
         self.turno_jugador = False
         self.game_timer.stop()
@@ -1061,6 +1166,8 @@ class JuegoPrincipiante:
                 self.area_juego.controls[indice_actual] = ficha_visual
                 nueva_zona = self.crear_zona_destino("arriba")
                 self.area_juego.controls.insert(0, nueva_zona)
+                # Mantener centradas las fichas después de agregar una nueva
+                self.area_juego.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         else:
             indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
                             if isinstance(control, ft.DragTarget)]
@@ -1069,6 +1176,8 @@ class JuegoPrincipiante:
                 self.area_juego.controls[indice_actual] = ficha_visual
                 nueva_zona = self.crear_zona_destino("abajo")
                 self.area_juego.controls.append(nueva_zona)
+                # Mantener centradas las fichas después de agregar una nueva
+                self.area_juego.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         
         if len(self.fichas_app) == 0:
             mensaje = "¡La computadora ha ganado!"
@@ -1169,6 +1278,8 @@ class JuegoPrincipiante:
                         self.area_juego.controls[indice_actual] = ficha_visual
                         nueva_zona = self.crear_zona_destino("arriba")
                         self.area_juego.controls.insert(0, nueva_zona)
+                        # Mantener centradas las fichas después de agregar una nueva
+                        self.area_juego.horizontal_alignment = ft.CrossAxisAlignment.CENTER
                 else:
                     indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
                                    if isinstance(control, ft.DragTarget)]
@@ -1177,6 +1288,8 @@ class JuegoPrincipiante:
                         self.area_juego.controls[indice_actual] = ficha_visual
                         nueva_zona = self.crear_zona_destino("abajo")
                         self.area_juego.controls.append(nueva_zona)
+                        # Mantener centradas las fichas después de agregar una nueva
+                        self.area_juego.horizontal_alignment = ft.CrossAxisAlignment.CENTER
 
                 self.turno_jugador = False
                 self.actualizar_indicador_turno()
@@ -1213,6 +1326,8 @@ class JuegoPrincipiante:
                         )
                     ],
                     spacing=0,
+                    alignment=ft.MainAxisAlignment.CENTER,  # Centrar verticalmente
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,  # Centrar horizontalmente
                 )
             ),
             on_accept=on_accept
