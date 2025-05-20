@@ -1006,6 +1006,7 @@ class JuegoPrincipiante:
                 # Mantener centradas las fichas después de agregar una nueva
                 self.area_juego.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         
+        self.actualizar_vista_extremos()
         self.actualizar_zoom_automatico()
         
         if len(self.fichas_jugador_view.controls) == 0:
@@ -1032,6 +1033,40 @@ class JuegoPrincipiante:
             mensaje = f"Quedan {len(self.pozo)} fichas en el pozo"
             self.mostrar_mensaje(mensaje)
             self.page.update()
+
+    def actualizar_vista_extremos(self):
+        """Actualiza la vista para mostrar solo los extremos del juego"""
+        controles = self.area_juego.controls
+        if len(controles) <= 5:  # Si hay 5 o menos elementos, mostrar todo
+            return
+        
+        # Obtener los elementos importantes
+        zona_arriba = next((c for c in controles if isinstance(c, ft.DragTarget) and c == controles[0]), None)
+        primera_ficha = next((c for c in controles[1:2] if not isinstance(c, ft.DragTarget)), None)
+        ficha_central = self.ficha_central_visual
+        ultima_ficha = next((c for c in controles[-2:-1] if not isinstance(c, ft.DragTarget)), None)
+        zona_abajo = next((c for c in controles if isinstance(c, ft.DragTarget) and c == controles[-1]), None)
+        
+        # Crear indicador de fichas ocultas
+        indicador_fichas = ft.Container(
+            content=ft.Text("...", size=20, color=colors.GREY_400),
+            alignment=ft.alignment.center,
+            height=40
+        )
+        
+        # Actualizar controles para mostrar solo los extremos
+        nuevos_controles = []
+        if zona_arriba:
+            nuevos_controles.append(zona_arriba)
+        if primera_ficha:
+            nuevos_controles.append(primera_ficha)
+        nuevos_controles.append(indicador_fichas)
+        if ultima_ficha:
+            nuevos_controles.append(ultima_ficha)
+        if zona_abajo:
+            nuevos_controles.append(zona_abajo)
+        
+        self.area_juego.controls = nuevos_controles
 
     def mostrar_mensaje(self, mensaje):
         if "ganado" in mensaje:
@@ -1193,6 +1228,7 @@ class JuegoPrincipiante:
             mensaje = "La computadora ha jugado una ficha de su mano"
         self.mostrar_mensaje(mensaje)
         
+        self.actualizar_vista_extremos()
         self.actualizar_zoom_automatico()
         
         self.game_timer.start()
@@ -1293,6 +1329,7 @@ class JuegoPrincipiante:
 
                 self.turno_jugador = False
                 self.actualizar_indicador_turno()
+                self.actualizar_vista_extremos()
                 self.actualizar_zoom_automatico()
                 
                 if len(self.fichas_jugador_view.controls) == 0:
