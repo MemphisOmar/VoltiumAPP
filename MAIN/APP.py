@@ -86,7 +86,6 @@ def main(page: ft.Page):
 
         def ayuda_click(e):
             if page.app_running:
-                page.clean()
                 mostrar_ayuda(page)
                 page.update()
 
