@@ -1,6 +1,7 @@
 import flet as ft
 import os
 import json
+from db_manager import DBManager
 
 PROFILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "user_profile.json")
 
@@ -38,16 +39,28 @@ class PerfilUsuarioForm(ft.Column):
         )
 
     def submit(self, e):
-        perfil = {
-            "id": self.id_input.value,
-            "edad": self.edad_input.value,
-            "sexo": self.sexo_input.value,
-            "carrera": self.carrera_input.value,
-            "grupo": self.grupo_input.value
-        }
-        with open(PROFILE_PATH, "w", encoding="utf-8") as f:
-            json.dump(perfil, f)
-        self.on_submit(perfil)
+        user_id = self.id_input.value
+        edad = self.edad_input.value
+        sexo = self.sexo_input.value
+        carrera = self.carrera_input.value
+        grupo = self.grupo_input.value
+
+        db = DBManager()
+        registered_user_id = db.registrar_usuario(user_id, edad, sexo, carrera, grupo)
+
+        if registered_user_id:
+            perfil = {
+                "id": user_id,
+                "edad": edad,
+                "sexo": sexo,
+                "carrera": carrera,
+                "grupo": grupo
+            }
+            with open(PROFILE_PATH, "w", encoding="utf-8") as f:
+                json.dump(perfil, f)
+            self.on_submit(perfil)
+        else:
+            print("Error al registrar el usuario en la base de datos.")
 
 def mostrar_formulario_perfil(page, on_perfil_guardado):
     page.clean()

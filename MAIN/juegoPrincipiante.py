@@ -3,6 +3,9 @@ from ayuda import mostrar_ayuda
 import random
 import time
 import threading
+import os
+import json
+from db_manager import DBManager
 from flet import (
     colors
 )
@@ -845,6 +848,17 @@ class JuegoPrincipiante:
         self.actualizar_zoom_automatico()
         self.page.update()
         self.iniciar_temporizador()
+        
+        # Get user_id from login
+        self.db = DBManager()
+        profile_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "user_profile.json")
+        if os.path.exists(profile_path):
+            with open(profile_path, "r", encoding="utf-8") as f:
+                user_profile = json.load(f)
+                self.user_id = user_profile["id"]
+        else:
+            self.user_id = None
+            print("No se encontró el perfil de usuario.")
 
     def cleanup(self):
         self.timer_active = False
@@ -1071,6 +1085,13 @@ class JuegoPrincipiante:
     def mostrar_mensaje(self, mensaje):
         if "ganado" in mensaje:
             self.game_timer.stop()
+            # Save game session data
+            if self.user_id:
+                tiempo_juego = int(self.game_timer.get_current_time())
+                self.db.registrar_sesion_juego(self.user_id, tiempo_juego)
+                print(f"Sesión de juego guardada para el usuario {self.user_id} con tiempo {tiempo_juego}")
+            else:
+                print("No se pudo guardar la sesión de juego: ID de usuario no disponible.")
         dlg = ft.AlertDialog(
             content=ft.Text(mensaje),
             actions=[
