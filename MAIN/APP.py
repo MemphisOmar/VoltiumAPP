@@ -1,6 +1,7 @@
 import flet as ft
 import os
 import sys
+import json
 
 # Asegurar que el directorio actual está en el path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -13,20 +14,134 @@ from flet import (
     colors
 )
 
+PROFILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "user_profile.json")
+
+# Formulario para crear perfil de usuario
+class PerfilUsuarioForm(ft.Column):
+    def __init__(self, on_submit):
+        self.on_submit = on_submit
+        self.id_input = ft.TextField(label="ID", width=200)
+        self.edad_input = ft.TextField(label="Edad", width=200, keyboard_type=ft.KeyboardType.NUMBER)
+        self.sexo_input = ft.Dropdown(label="Sexo", width=200, options=[ft.dropdown.Option("M"), ft.dropdown.Option("F"), ft.dropdown.Option("Otro")])
+        self.carrera_input = ft.TextField(label="Carrera", width=200)
+        self.grupo_input = ft.TextField(label="Grupo", width=200)
+        self.submit_btn = ft.ElevatedButton(text="Guardar Perfil", on_click=self.submit)
+        super().__init__(
+            controls=[
+                self.id_input,
+                self.edad_input,
+                self.sexo_input,
+                self.carrera_input,
+                self.grupo_input,
+                self.submit_btn
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER
+        )
+
+    def submit(self, e):
+        perfil = {
+            "id": self.id_input.value,
+            "edad": self.edad_input.value,
+            "sexo": self.sexo_input.value,
+            "carrera": self.carrera_input.value,
+            "grupo": self.grupo_input.value
+        }
+        with open(PROFILE_PATH, "w", encoding="utf-8") as f:
+            json.dump(perfil, f)
+        self.on_submit(perfil)
+
+
 def main(page: ft.Page):
     # Variable de control para el estado de la aplicación
     page.app_running = True
-    
+
+    def cargar_perfil():
+        if os.path.exists(PROFILE_PATH):
+            with open(PROFILE_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        return None
+
+    def mostrar_formulario_perfil():
+        page.clean()
+        def on_perfil_guardado(perfil):
+            page.clean()
+            mostrar_menu()
+            page.update()
+        page.add(
+            ft.Container(
+                content=PerfilUsuarioForm(on_perfil_guardado),
+                alignment=ft.alignment.center,
+                expand=True
+            )
+        )
+        page.update()
+
+    def mostrar_menu():
+        def jugar_click(e):
+            if page.app_running:
+                page.clean()
+                configurar_ventana_juego(page, main)
+                page.update()
+
+        def ayuda_click(e):
+            if page.app_running:
+                page.clean()
+                mostrar_ayuda(page)
+                page.update()
+
+        def salir_click(e):
+            page.app_running = False
+            page.window.close()
+
+        jugar_button = ft.ElevatedButton(text="JUGAR", on_click=jugar_click, width=200, height=50, color="#29c589")
+        ayuda_button = ft.ElevatedButton(text="AYUDA", on_click=ayuda_click, width=200, height=50, color="#29c589")
+        salir_button = ft.ElevatedButton(text="SALIR", on_click=salir_click, width=200, height=50, color="#29c589")
+
+        page.add(
+            ft.Container(
+                content=ft.Column(
+                    [
+                        ft.Image(src="MAIN/Voltium_LOGO2.png")
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,  
+                ),
+                expand=True,
+                alignment=ft.alignment.top_center,  
+                width=1024,
+                height=768
+            )
+        )
+
+        page.add(
+            ft.Container(
+                content=ft.Column(
+                    [
+                        jugar_button,
+                        ayuda_button,
+                        salir_button
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,  
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,  
+                ),
+                expand=True,
+                alignment=ft.alignment.bottom_center, 
+                width=800,
+                height=900,
+            )
+        )
+        page.update()
+
     def on_window_event(e):
         if e.data == "close":
             page.app_running = False
             page.window_destroy()
-    
+
     page.window.on_event = on_window_event
-    
-    page.clean()  #Limpiar la página actual antes de agregar los elementos del menú
+    page.clean()
     page.title = "VOLTIUM"
-    page.bgcolor = "#88B98A"  # Color de fondo verde claro
+    page.bgcolor = "#88B98A"
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.window.width = 720
@@ -35,62 +150,11 @@ def main(page: ft.Page):
     page.padding = 0
     page.margin = 0
 
-    def jugar_click(e):
-        if page.app_running:
-            page.clean()
-            configurar_ventana_juego(page, main)
-            page.update()
-
-    def ayuda_click(e):
-        if page.app_running:
-            page.clean()
-            mostrar_ayuda(page)
-            page.update()
-
-    def salir_click(e):
-        page.app_running = False
-        page.window_close()
-
-    jugar_button = ft.ElevatedButton(text="JUGAR", on_click=jugar_click, width=200, height=50, color="#29c589")
-    ayuda_button = ft.ElevatedButton(text="AYUDA", on_click=ayuda_click, width=200, height=50, color="#29c589")
-    salir_button = ft.ElevatedButton(text="SALIR", on_click=salir_click, width=200, height=50, color="#29c589")
-
-    page.add(
-        ft.Container(
-            content=ft.Column(
-                [
-                    ft.Image(src="MAIN/Voltium_LOGO2.png")
-                ],
-                alignment=ft.MainAxisAlignment.CENTER,
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,  
-            ),
-            expand=True,
-            alignment=ft.alignment.top_center,  
-            width=1024,
-            height=768
-        )
-    )
-
-    page.add(
-        ft.Container(
-            content=ft.Column(
-                [
-                    jugar_button,
-                    ayuda_button,
-                    salir_button
-                ],
-                alignment=ft.MainAxisAlignment.CENTER,  
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,  
-            ),
-            expand=True,
-            alignment=ft.alignment.bottom_center, 
-            width=800,
-            height=900,
-        )
-    )
-
-
-    page.update()  # Actualizar la página para reflejar los cambios
+    perfil = cargar_perfil()
+    if perfil is None:
+        mostrar_formulario_perfil()
+    else:
+        mostrar_menu()
 
 if __name__ == "__main__":
     ft.app(target=main)
