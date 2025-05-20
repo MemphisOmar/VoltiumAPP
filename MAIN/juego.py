@@ -4,8 +4,6 @@ from juegoPrincipiante import configurar_ventana_domino #Importar la subrutina d
 import random
 from db_manager import DBManager
 import time
-import asyncio
-import threading
 
 def configurar_ventana_juego(page: ft.Page, volver_al_menu_principal):
     def volver_al_menu_principal_click(e):

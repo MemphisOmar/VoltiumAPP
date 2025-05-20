@@ -6,14 +6,9 @@ import json
 # Asegurar que el directorio actual está en el path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from ayuda import mostrar_ayuda  #Importar la subrutina desde ayuda.py
 from juego import configurar_ventana_juego  #Importar la subrutina desde juego.py
 from login import mostrar_formulario_perfil
-
-from flet import (
-    Page,
-    colors
-)
+from ayuda import mostrar_ayuda
 
 PROFILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "user_profile.json")
 
@@ -44,6 +39,7 @@ def main(page: ft.Page):
 
         def ayuda_click(e):
             if page.app_running:
+                page.update()
                 mostrar_ayuda(page)
                 page.update()
 
