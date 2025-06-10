@@ -1136,7 +1136,7 @@ class JuegoPrincipiante:
             dialog_content_column.controls.append(ficha_vis)
         
         # Añadir ficha central
-        dialog_content_column.controls.append(self.ficha_central_visual_original)
+        dialog_content_column.controls.append(self.ficha_central_visual)
         
         # Añadir fichas de abajo
         for ficha_vis in self.fichas_visuales_abajo:
@@ -1147,9 +1147,9 @@ class JuegoPrincipiante:
             title=ft.Text("Tablero Completo (Solo Vista)"),
             content=ft.Container(
                 content=dialog_content_column, 
-                width=300, # Ancho fijo para el contenedor del scroll
-                height=450, # Altura fija para el contenedor del scroll
-                padding=5,
+                width=350, # Ancho fijo para el contenedor del scroll - Aumentado de 300
+                height=550, # Altura fija para el contenedor del scroll - Aumentado de 450
+                padding=10, # Aumentado padding para mejor espaciado
                 alignment=ft.alignment.center
             ),
             actions=[
