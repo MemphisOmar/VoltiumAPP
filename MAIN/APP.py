@@ -14,6 +14,9 @@ PROFILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "user_pr
 
 
 def main(page: ft.Page):
+    # Inicializar la base de datos y crear las tablas necesarias
+    from db_manager import DBManager
+    DBManager()
     # Variable de control para el estado de la aplicación
     page.app_running = True
 

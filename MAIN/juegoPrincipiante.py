@@ -6,10 +6,11 @@ import threading
 import os
 import json
 from db_manager import DBManager
+from sesion_manager import SesionManager
 from flet import (
     colors
 )
-from sesion_manager import SesionManager
+
 
 class Timer:
     def __init__(self):
@@ -578,7 +579,7 @@ def encontrar_ficha_inicial(fichas_jugador, fichas_app):
     return mejor_ficha_app, "app"
 
 class JuegoPrincipiante:
-    def __init__(self, page: ft.Page, main_menu=None):
+    def __init__(self, page, main_menu):
         self.page = page
         self.main_menu = main_menu
         self.timer_active = True
@@ -863,19 +864,21 @@ class JuegoPrincipiante:
         self.page.update()
         self.iniciar_temporizador()
         
-        # Get user_id from login
-        self.db = DBManager()
+        # Obtener user_id desde user_profile.json
         profile_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "user_profile.json")
         if os.path.exists(profile_path):
             with open(profile_path, "r", encoding="utf-8") as f:
                 user_profile = json.load(f)
-                self.user_id = user_profile["id"]
+                self.user_id = user_profile.get("id")
         else:
             self.user_id = None
             print("No se encontró el perfil de usuario.")
 
-        self.sesion_manager = SesionManager()
-        self.sesion_manager.incrementar_sesion()  # Incrementa sesiones al iniciar el juego
+        if self.user_id:
+            self.sesion_manager = SesionManager(self.user_id)
+            self.sesion_manager.incrementar_sesion()  # Incrementa sesiones al iniciar el juego
+        else:
+            self.sesion_manager = None
 
     def cleanup(self):
         self.timer_active = False
@@ -1059,8 +1062,9 @@ class JuegoPrincipiante:
     def finalizar_partida(self):
         # Llamar esto cuando termine una partida
         minutos_jugados = int(self.game_timer.get_current_time() // 60)
-        self.sesion_manager.incrementar_partidas()
-        self.sesion_manager.incrementar_tiempo(minutos_jugados)
+        if self.sesion_manager:
+            self.sesion_manager.incrementar_partidas()
+            self.sesion_manager.incrementar_tiempo(minutos_jugados)
 
     def agregar_ficha_del_pozo(self, ficha):
         if ficha in self.pozo:
