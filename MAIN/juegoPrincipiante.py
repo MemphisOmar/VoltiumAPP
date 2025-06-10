@@ -603,6 +603,11 @@ class JuegoPrincipiante:
 
         self.turno_jugador = self.quien_empieza != "jugador"
         self.estado_juego = EstadoJuego(self.ficha_central)
+        
+        # Para el diálogo de "Ver Tablero Completo"
+        self.fichas_visuales_arriba = []
+        self.fichas_visuales_abajo = []
+
         self.page.clean()
         self.page.title = "DOMINO - Principiante"
         self.page.bgcolor = "#1B4D3E"
@@ -618,6 +623,12 @@ class JuegoPrincipiante:
             text="Volver al menú",
             on_click=self.volver_menu,
             width=120,
+            height=40
+        )
+        self.boton_ver_juego_completo = ft.ElevatedButton(
+            text="Ver Tablero",
+            on_click=self.mostrar_juego_completo_dialogo,
+            width=120, # Ajustado para caber en la columna izquierda
             height=40
         )
         self.ficha_central.repr1 = self.obtener_representacion_forzada(self.ficha_central.numero1, False)
@@ -689,6 +700,7 @@ class JuegoPrincipiante:
             if self.es_ficha_central_doble
             else crear_ficha_visual(self.ficha_central.numero1, self.ficha_central.numero2, es_central=True, repr1=self.ficha_central.repr1, repr2=self.ficha_central.repr2)
         )
+        self.ficha_central_visual_original = self.ficha_central_visual # Guardar para el diálogo
         self.area_juego.controls = [
             self.zona_arriba,
             self.ficha_central_visual,
@@ -790,6 +802,7 @@ class JuegoPrincipiante:
                                 [
                                     self.pozo_view,
                                     self.timer_container,
+                                    self.boton_ver_juego_completo, # Botón añadido aquí
                                     self.volver_button
                                 ],
                                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -1000,6 +1013,7 @@ class JuegoPrincipiante:
         )
         
         if lado == "arriba":
+            self.fichas_visuales_arriba.insert(0, ficha_visual) # Guardar para diálogo
             indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
                              if isinstance(control, ft.DragTarget)]
             if indices_zonas:
@@ -1010,6 +1024,7 @@ class JuegoPrincipiante:
                 # Mantener centradas las fichas después de agregar una nueva
                 self.area_juego.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         else:
+            self.fichas_visuales_abajo.append(ficha_visual) # Guardar para diálogo
             indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
                              if isinstance(control, ft.DragTarget)]
             if indices_zonas:
@@ -1106,6 +1121,51 @@ class JuegoPrincipiante:
         dlg.open = False
         e.page.update()
     
+    def mostrar_juego_completo_dialogo(self, e):
+        dialog_content_column = ft.Column(
+            spacing=2, 
+            scroll=ft.ScrollMode.AUTO, 
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            # Ajustar el tamaño según sea necesario para el contenido
+            # height=self.page.height * 0.7, # Ejemplo de altura relativa
+            # width=self.page.width * 0.5,   # Ejemplo de anchura relativa
+        )
+
+        # Añadir fichas de arriba (en orden inverso de cómo se juegan)
+        for ficha_vis in self.fichas_visuales_arriba: # Ya están en orden correcto para mostrar de arriba hacia abajo
+            dialog_content_column.controls.append(ficha_vis)
+        
+        # Añadir ficha central
+        dialog_content_column.controls.append(self.ficha_central_visual_original)
+        
+        # Añadir fichas de abajo
+        for ficha_vis in self.fichas_visuales_abajo:
+            dialog_content_column.controls.append(ficha_vis)
+
+        dlg_juego_completo = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("Tablero Completo (Solo Vista)"),
+            content=ft.Container(
+                content=dialog_content_column, 
+                width=300, # Ancho fijo para el contenedor del scroll
+                height=450, # Altura fija para el contenedor del scroll
+                padding=5,
+                alignment=ft.alignment.center
+            ),
+            actions=[
+                ft.TextButton("Cerrar", on_click=self.cerrar_dialogo_juego_completo)
+            ],
+            actions_alignment=ft.MainAxisAlignment.END
+        )
+        self.page.dialog = dlg_juego_completo
+        dlg_juego_completo.open = True
+        self.page.update()
+
+    def cerrar_dialogo_juego_completo(self, e):
+        if self.page.dialog:
+            self.page.dialog.open = False
+        self.page.update()
+
     def aumentar_zoom(self, e):
         if self.escala_actual < 2.0:
             self.escala_actual += 0.1
@@ -1215,6 +1275,7 @@ class JuegoPrincipiante:
         )
         
         if lado_a_jugar == "arriba":
+            self.fichas_visuales_arriba.insert(0, ficha_visual) # Guardar para diálogo
             indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
                             if isinstance(control, ft.DragTarget)]
             if indices_zonas:
@@ -1225,6 +1286,7 @@ class JuegoPrincipiante:
                 # Mantener centradas las fichas después de agregar una nueva
                 self.area_juego.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         else:
+            self.fichas_visuales_abajo.append(ficha_visual) # Guardar para diálogo
             indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
                             if isinstance(control, ft.DragTarget)]
             if indices_zonas:
@@ -1328,6 +1390,7 @@ class JuegoPrincipiante:
                 )
                 
                 if posicion == "arriba":
+                    self.fichas_visuales_arriba.insert(0, ficha_visual) # Guardar para diálogo
                     indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
                                    if isinstance(control, ft.DragTarget)]
                     if indices_zonas:
@@ -1338,6 +1401,7 @@ class JuegoPrincipiante:
                         # Mantener centradas las fichas después de agregar una nueva
                         self.area_juego.horizontal_alignment = ft.CrossAxisAlignment.CENTER
                 else:
+                    self.fichas_visuales_abajo.append(ficha_visual) # Guardar para diálogo
                     indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
                                    if isinstance(control, ft.DragTarget)]
                     if indices_zonas:
