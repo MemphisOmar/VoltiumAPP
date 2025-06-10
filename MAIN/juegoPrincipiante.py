@@ -767,7 +767,7 @@ class JuegoPrincipiante:
         self.boton_jugar_oponente = ft.ElevatedButton(
             text="Pasar Turno",
             tooltip="Hacer jugar al oponente",
-            on_click=self.colocar_ficha_especial,
+            on_click=self.jugador_pasa_turno,  # Changed to new method
             width=120,
             height=40,
             style=ft.ButtonStyle(
@@ -1165,6 +1165,22 @@ class JuegoPrincipiante:
         if self.page.dialog:
             self.page.dialog.open = False
         self.page.update()
+
+    def jugador_pasa_turno(self, e):
+        if not self.turno_jugador:
+            # Not player's turn, do nothing or show a message
+            self.mostrar_mensaje("No es tu turno.")
+            return
+
+        # Player chooses to pass.
+        self.mostrar_mensaje("Has decidido pasar el turno.")
+        
+        self.turno_jugador = False
+        self.actualizar_indicador_turno() # Update indicator to "Turno PC"
+        self.page.update() # Ensure UI reflects the change
+
+        # Trigger AI's turn after a short delay
+        threading.Timer(1.0, self.colocar_ficha_especial).start()
 
     def aumentar_zoom(self, e):
         if self.escala_actual < 2.0:
