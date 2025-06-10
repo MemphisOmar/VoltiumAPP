@@ -622,8 +622,8 @@ class JuegoPrincipiante:
         self.page.margin = 0
         self.titulo = ft.Text("Modo Principiante", size=24, color=colors.BLACK)
         self.volver_button = ft.ElevatedButton(
-            text="Volver al menú",
-            on_click=self.volver_menu,
+            text="FINALIZAR JUEGO",
+            on_click=self.finalizar_juego,
             width=120,
             height=40
         )
@@ -876,9 +876,10 @@ class JuegoPrincipiante:
 
         if self.user_id:
             self.sesion_manager = SesionManager(self.user_id)
-            self.sesion_manager.incrementar_sesion()  # Incrementa sesiones al iniciar el juego
+            self.sesion_manager.incrementar_partidas()  # Incrementa partidas al iniciar el juego
         else:
             self.sesion_manager = None
+        self.tiempo_partida = 0  # Para almacenar el tiempo jugado en la partida
 
     def cleanup(self):
         self.timer_active = False
@@ -898,7 +899,7 @@ class JuegoPrincipiante:
                 break
         return False
 
-    def volver_menu(self, e):
+    def finalizar_juego(self, e):
         self.cleanup()
         if self.main_menu:
             self.main_menu(self.page)
@@ -1061,10 +1062,12 @@ class JuegoPrincipiante:
 
     def finalizar_partida(self):
         # Llamar esto cuando termine una partida
-        minutos_jugados = int(self.game_timer.get_current_time() // 60)
-        if self.sesion_manager:
-            self.sesion_manager.incrementar_partidas()
-            self.sesion_manager.incrementar_tiempo(minutos_jugados)
+        if self.game_timer:
+            self.tiempo_partida = int(self.game_timer.get_current_time())
+        else:
+            self.tiempo_partida = 0
+        if self.sesion_manager and self.tiempo_partida > 0:
+            self.sesion_manager.incrementar_tiempo(self.tiempo_partida)
 
     def agregar_ficha_del_pozo(self, ficha):
         if ficha in self.pozo:

@@ -27,7 +27,7 @@ class DBManager:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id TEXT NOT NULL,
                 sesiones INTEGER DEFAULT 0,
-                tiempo INTEGER DEFAULT 0,
+                tiempo TEXT DEFAULT "0:00:00",
                 partidas INTEGER DEFAULT 0,
                 FOREIGN KEY(user_id) REFERENCES users(user_id)
             )

@@ -14,7 +14,6 @@ PROFILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "user_pr
 
 
 def main(page: ft.Page):
-    # Inicializar la base de datos y crear las tablas necesarias
     from db_manager import DBManager
     DBManager()
     # Variable de control para el estado de la aplicación
@@ -113,6 +112,14 @@ def main(page: ft.Page):
         mostrar_menu()
 
 if __name__ == "__main__":
+    # Incrementar sesiones SOLO al abrir la app
+    perfil = None
+    if os.path.exists(PROFILE_PATH):
+        with open(PROFILE_PATH, "r", encoding="utf-8") as f:
+            perfil = json.load(f)
+    if perfil and "id" in perfil:
+        from sesion_manager import SesionManager
+        SesionManager(perfil["id"]).incrementar_sesion()
     ft.app(target=main)
 
 
