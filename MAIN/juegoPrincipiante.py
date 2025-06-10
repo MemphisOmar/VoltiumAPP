@@ -901,6 +901,11 @@ class JuegoPrincipiante:
 
     def finalizar_juego(self, e):
         self.cleanup()
+        if self.game_timer:
+            self.game_timer.stop()
+            segundos_jugados = int(self.game_timer.get_current_time())
+            if self.sesion_manager and segundos_jugados > 0:
+                self.sesion_manager.incrementar_tiempo(segundos_jugados)
         if self.main_menu:
             self.main_menu(self.page)
         
