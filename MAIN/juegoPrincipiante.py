@@ -9,6 +9,7 @@ from db_manager import DBManager
 from flet import (
     colors
 )
+from sesion_manager import SesionManager
 
 class Timer:
     def __init__(self):
@@ -873,6 +874,9 @@ class JuegoPrincipiante:
             self.user_id = None
             print("No se encontró el perfil de usuario.")
 
+        self.sesion_manager = SesionManager()
+        self.sesion_manager.incrementar_sesion()  # Incrementa sesiones al iniciar el juego
+
     def cleanup(self):
         self.timer_active = False
         if hasattr(self, 'timer_thread'):
@@ -1052,6 +1056,12 @@ class JuegoPrincipiante:
         
         self.page.update()
 
+    def finalizar_partida(self):
+        # Llamar esto cuando termine una partida
+        minutos_jugados = int(self.game_timer.get_current_time() // 60)
+        self.sesion_manager.incrementar_partidas()
+        self.sesion_manager.incrementar_tiempo(minutos_jugados)
+
     def agregar_ficha_del_pozo(self, ficha):
         if ficha in self.pozo:
             self.pozo.remove(ficha)
@@ -1100,13 +1110,6 @@ class JuegoPrincipiante:
     def mostrar_mensaje(self, mensaje):
         if "ganado" in mensaje:
             self.game_timer.stop()
-            # Save game session data
-            if self.user_id:
-                tiempo_juego = int(self.game_timer.get_current_time())
-                self.db.registrar_sesion_juego(self.user_id, tiempo_juego)
-                print(f"Sesión de juego guardada para el usuario {self.user_id} con tiempo {tiempo_juego}")
-            else:
-                print("No se pudo guardar la sesión de juego: ID de usuario no disponible.")
         dlg = ft.AlertDialog(
             content=ft.Text(mensaje),
             actions=[

@@ -21,15 +21,15 @@ class DBManager:
                 grupo TEXT
             )
         ''')
-
-        # Crear tabla de sesiones de juego
+        # Crear tabla de sesiones de juego relacionada al usuario
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS game_sessions (
-                session_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER,
-                tiempo INTEGER,
-                fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users(id)
+            CREATE TABLE IF NOT EXISTS sesion (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                sesiones INTEGER DEFAULT 0,
+                tiempo INTEGER DEFAULT 0,
+                partidas INTEGER DEFAULT 0,
+                FOREIGN KEY(user_id) REFERENCES users(user_id)
             )
         ''')
 
@@ -53,36 +53,6 @@ class DBManager:
             return None
         finally:
             conn.close()
-
-    def registrar_sesion_juego(self, user_id, tiempo):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        try:
-            cursor.execute('''
-                INSERT INTO game_sessions (user_id, tiempo)
-                VALUES (?, ?)
-            ''', (user_id, tiempo))
-            conn.commit()
-            session_id = cursor.lastrowid
-            print(f"Sesión de juego registrada con ID: {session_id}")
-            return session_id
-        except sqlite3.IntegrityError as e:
-            print(f"Error al registrar sesión de juego: {e}")
-            return None
-        finally:
-            conn.close()
-
-    def obtener_sesiones_usuario(self, user_id):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        cursor.execute('''
-            SELECT session_id, tiempo, fecha
-            FROM game_sessions
-            WHERE user_id = ?
-        ''', (user_id,))
-        resultados = cursor.fetchall()
-        conn.close()
-        return resultados
 
     def obtener_info_usuario(self, user_id):
         conn = sqlite3.connect(self.db_path)
