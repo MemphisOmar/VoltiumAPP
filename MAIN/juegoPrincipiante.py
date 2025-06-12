@@ -606,9 +606,9 @@ class JuegoPrincipiante:
         self.turno_jugador = self.quien_empieza != "jugador"
         self.estado_juego = EstadoJuego(self.ficha_central)
         
-        # Para el diálogo de "Ver Tablero Completo"
-        self.fichas_visuales_arriba = []
-        self.fichas_visuales_abajo = []
+        # Para el diálogo de "Ver Tablero Completo" - almacenar datos en lugar de controles visuales
+        self.datos_fichas_arriba = []  # Lista de diccionarios con datos de fichas
+        self.datos_fichas_abajo = []   # Lista de diccionarios con datos de fichas
 
         self.page.clean()
         self.page.title = "DOMINO - Principiante"
@@ -629,8 +629,8 @@ class JuegoPrincipiante:
         )
         self.boton_ver_juego_completo = ft.ElevatedButton(
             text="Ver Tablero",
-            on_click=self.mostrar_juego_completo_dialogo,
-            width=120, # Ajustado para caber en la columna izquierda
+            on_click=self.mostrar_juego_completo_dialogo,  # Cambiar de vuelta al método original
+            width=120,
             height=40
         )
         self.ficha_central.repr1 = self.obtener_representacion_forzada(self.ficha_central.numero1, False)
@@ -702,7 +702,16 @@ class JuegoPrincipiante:
             if self.es_ficha_central_doble
             else crear_ficha_visual(self.ficha_central.numero1, self.ficha_central.numero2, es_central=True, repr1=self.ficha_central.repr1, repr2=self.ficha_central.repr2)
         )
-        self.ficha_central_visual_original = self.ficha_central_visual # Guardar para el diálogo
+        # Guardar datos de la ficha central para el diálogo
+        self.datos_ficha_central = {
+            "numero1": self.ficha_central.numero1,
+            "numero2": self.ficha_central.numero2,
+            "repr1": self.ficha_central.repr1,
+            "repr2": self.ficha_central.repr2,
+            "es_doble": self.es_ficha_central_doble,
+            "es_computadora": False,
+            "es_central": True
+        }
         self.area_juego.controls = [
             self.zona_arriba,
             self.ficha_central_visual,
@@ -1017,6 +1026,7 @@ class JuegoPrincipiante:
         
         es_doble = ficha.numero1 == ficha.numero2
         
+        # Crear ficha visual para el tablero principal
         ficha_visual = (
             crear_ficha_visual_horizontal(ficha.numero1, ficha.numero2, 
                                           repr1=ficha.repr1, repr2=ficha.repr2)
@@ -1025,8 +1035,19 @@ class JuegoPrincipiante:
                                     repr1=ficha.repr1, repr2=ficha.repr2)
         )
         
+        # Guardar datos para el diálogo (no el control visual)
+        datos_ficha = {
+            "numero1": ficha.numero1,
+            "numero2": ficha.numero2,
+            "repr1": ficha.repr1,
+            "repr2": ficha.repr2,
+            "es_doble": es_doble,
+            "es_computadora": False,
+            "es_central": False
+        }
+        
         if lado == "arriba":
-            self.fichas_visuales_arriba.insert(0, ficha_visual) # Guardar para diálogo
+            self.datos_fichas_arriba.insert(0, datos_ficha)  # Guardar datos para diálogo
             indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
                              if isinstance(control, ft.DragTarget)]
             if indices_zonas:
@@ -1034,10 +1055,9 @@ class JuegoPrincipiante:
                 self.area_juego.controls[indice_actual] = ficha_visual
                 nueva_zona = self.crear_zona_destino("arriba")
                 self.area_juego.controls.insert(0, nueva_zona)
-                # Mantener centradas las fichas después de agregar una nueva
                 self.area_juego.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         else:
-            self.fichas_visuales_abajo.append(ficha_visual) # Guardar para diálogo
+            self.datos_fichas_abajo.append(datos_ficha)  # Guardar datos para diálogo
             indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
                              if isinstance(control, ft.DragTarget)]
             if indices_zonas:
@@ -1045,7 +1065,6 @@ class JuegoPrincipiante:
                 self.area_juego.controls[indice_actual] = ficha_visual
                 nueva_zona = self.crear_zona_destino("abajo")
                 self.area_juego.controls.append(nueva_zona)
-                # Mantener centradas las fichas después de agregar una nueva
                 self.area_juego.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         
         self.actualizar_vista_extremos()
@@ -1137,49 +1156,160 @@ class JuegoPrincipiante:
         e.page.update()
     
     def mostrar_juego_completo_dialogo(self, e):
-        dialog_content_column = ft.Column(
-            spacing=2, 
-            scroll=ft.ScrollMode.AUTO, 
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            # Ajustar el tamaño según sea necesario para el contenido
-            # height=self.page.height * 0.7, # Ejemplo de altura relativa
-            # width=self.page.width * 0.5,   # Ejemplo de anchura relativa
-        )
-
-        # Añadir fichas de arriba (en orden inverso de cómo se juegan)
-        for ficha_vis in self.fichas_visuales_arriba: # Ya están en orden correcto para mostrar de arriba hacia abajo
-            dialog_content_column.controls.append(ficha_vis)
+        """Crea y muestra un overlay con todas las fichas jugadas como alternativa al diálogo"""
+        print("=== DEBUG: Usando overlay en lugar de diálogo ===")
         
-        # Añadir ficha central
-        dialog_content_column.controls.append(self.ficha_central_visual)
-        
-        # Añadir fichas de abajo
-        for ficha_vis in self.fichas_visuales_abajo:
-            dialog_content_column.controls.append(ficha_vis)
+        try:
+            # Crear controles igual que antes
+            controles_tablero = []
+            
+            # Añadir fichas de arriba
+            for datos_ficha in reversed(self.datos_fichas_arriba):
+                if datos_ficha["es_doble"]:
+                    ficha_control = crear_ficha_visual_horizontal(
+                        datos_ficha["numero1"], datos_ficha["numero2"],
+                        repr1=datos_ficha["repr1"], repr2=datos_ficha["repr2"],
+                        es_computadora=datos_ficha["es_computadora"],
+                        es_central=datos_ficha["es_central"]
+                    )
+                else:
+                    ficha_control = crear_ficha_visual(
+                        datos_ficha["numero1"], datos_ficha["numero2"],
+                        repr1=datos_ficha["repr1"], repr2=datos_ficha["repr2"],
+                        es_computadora=datos_ficha["es_computadora"],
+                        es_central=datos_ficha["es_central"]
+                    )
+                controles_tablero.append(ficha_control)
+            
+            # Añadir ficha central
+            if self.datos_ficha_central["es_doble"]:
+                ficha_central_control = crear_ficha_visual_horizontal(
+                    self.datos_ficha_central["numero1"], self.datos_ficha_central["numero2"],
+                    repr1=self.datos_ficha_central["repr1"], repr2=self.datos_ficha_central["repr2"],
+                    es_computadora=self.datos_ficha_central["es_computadora"],
+                    es_central=self.datos_ficha_central["es_central"]
+                )
+            else:
+                ficha_central_control = crear_ficha_visual(
+                    self.datos_ficha_central["numero1"], self.datos_ficha_central["numero2"],
+                    repr1=self.datos_ficha_central["repr1"], repr2=self.datos_ficha_central["repr2"],
+                    es_computadora=self.datos_ficha_central["es_computadora"],
+                    es_central=self.datos_ficha_central["es_central"]
+                )
+            controles_tablero.append(ficha_central_control)
+            
+            # Añadir fichas de abajo
+            for datos_ficha in self.datos_fichas_abajo:
+                if datos_ficha["es_doble"]:
+                    ficha_control = crear_ficha_visual_horizontal(
+                        datos_ficha["numero1"], datos_ficha["numero2"],
+                        repr1=datos_ficha["repr1"], repr2=datos_ficha["repr2"],
+                        es_computadora=datos_ficha["es_computadora"],
+                        es_central=datos_ficha["es_central"]
+                    )
+                else:
+                    ficha_control = crear_ficha_visual(
+                        datos_ficha["numero1"], datos_ficha["numero2"],
+                        repr1=datos_ficha["repr1"], repr2=datos_ficha["repr2"],
+                        es_computadora=datos_ficha["es_computadora"],
+                        es_central=datos_ficha["es_central"]
+                    )
+                controles_tablero.append(ficha_control)
 
-        dlg_juego_completo = ft.AlertDialog(
-            modal=True,
-            title=ft.Text("Tablero Completo (Solo Vista)"),
-            content=ft.Container(
-                content=dialog_content_column, 
-                width=350, # Ancho fijo para el contenedor del scroll - Aumentado de 300
-                height=550, # Altura fija para el contenedor del scroll - Aumentado de 450
-                padding=10, # Aumentado padding para mejor espaciado
-                alignment=ft.alignment.center
-            ),
-            actions=[
-                ft.TextButton("Cerrar", on_click=self.cerrar_dialogo_juego_completo)
-            ],
-            actions_alignment=ft.MainAxisAlignment.END
-        )
-        self.page.dialog = dlg_juego_completo
-        dlg_juego_completo.open = True
-        self.page.update()
+            if len(controles_tablero) == 1:
+                controles_tablero.insert(0, ft.Text(
+                    "Solo está la ficha central",
+                    size=14,
+                    color=colors.GREY_600,
+                    text_align=ft.TextAlign.CENTER
+                ))
 
-    def cerrar_dialogo_juego_completo(self, e):
-        if self.page.dialog:
-            self.page.dialog.open = False
-        self.page.update()
+            # Crear overlay en lugar de diálogo
+            overlay_content = ft.Container(
+                content=ft.Column(
+                    [
+                        ft.Container(
+                            content=ft.Row(
+                                [
+                                    ft.Text("Tablero Completo", size=20, weight=ft.FontWeight.BOLD, color=colors.WHITE),
+                                    ft.IconButton(
+                                        icon=ft.icons.CLOSE,
+                                        icon_color=colors.WHITE,
+                                        on_click=lambda _: self.cerrar_overlay()
+                                    )
+                                ],
+                                alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+                            ),
+                            bgcolor=colors.BLUE_600,
+                            padding=10,
+                            border_radius=ft.border_radius.only(top_left=10, top_right=10)
+                        ),
+                        ft.Container(
+                            content=ft.Column(
+                                controls=controles_tablero,
+                                scroll=ft.ScrollMode.AUTO,
+                                spacing=5,
+                                horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                            ),
+                            width=280,
+                            height=400,
+                            bgcolor=colors.WHITE,
+                            padding=10
+                        )
+                    ],
+                    spacing=0
+                ),
+                bgcolor=colors.WHITE,
+                border_radius=10,
+                shadow=ft.BoxShadow(
+                    spread_radius=1,
+                    blur_radius=15,
+                    color=colors.BLACK26,
+                    offset=ft.Offset(0, 0),
+                    blur_style=ft.ShadowBlurStyle.OUTER,
+                )
+            )
+
+            # Crear contenedor de fondo semi-transparente
+            overlay_background = ft.Container(
+                content=ft.Stack(
+                    [
+                        ft.Container(
+                            bgcolor=colors.BLACK54,
+                            expand=True,
+                            on_click=lambda _: self.cerrar_overlay()
+                        ),
+                        ft.Container(
+                            content=overlay_content,
+                            alignment=ft.alignment.center,
+                            expand=True
+                        )
+                    ]
+                ),
+                expand=True
+            )
+
+            # Añadir overlay a la página
+            self.page.overlay.append(overlay_background)
+            self.overlay_actual = overlay_background
+            self.page.update()
+            
+            print("=== DEBUG: Overlay mostrado ===")
+            
+        except Exception as ex:
+            print(f"=== DEBUG: Error en overlay: {ex} ===")
+
+    def cerrar_overlay(self):
+        """Cierra el overlay del tablero"""
+        print("=== DEBUG: Cerrando overlay ===")
+        try:
+            if hasattr(self, 'overlay_actual') and self.overlay_actual:
+                self.page.overlay.remove(self.overlay_actual)
+                self.overlay_actual = None
+                self.page.update()
+                print("=== DEBUG: Overlay cerrado ===")
+        except Exception as ex:
+            print(f"=== DEBUG: Error cerrando overlay: {ex} ===")
 
     def jugador_pasa_turno(self, e):
         if not self.turno_jugador:
@@ -1197,20 +1327,38 @@ class JuegoPrincipiante:
         # Trigger AI's turn after a short delay
         threading.Timer(1.0, self.colocar_ficha_especial).start()
 
-    def aumentar_zoom(self, e):
-        if self.escala_actual < 2.0:
-            self.escala_actual += 0.1
-            self.actualizar_zoom()
-            
-    def disminuir_zoom(self, e):
-        if self.escala_actual > 0.1:
-            self.escala_actual -= 0.1
-            self.actualizar_zoom()
-            
-    def restablecer_zoom(self, e):
-        self.escala_actual = 1.0
-        self.actualizar_zoom()
+    def test_boton_simple(self, e):
+        """Método de prueba simple para verificar que el botón funciona"""
+        print("¡BOTÓN FUNCIONA!")
         
+        # Probar con SnackBar en lugar de diálogo
+        snack_bar = ft.SnackBar(
+            content=ft.Text("¡El botón Ver Tablero funciona correctamente!", color=colors.WHITE),
+            bgcolor=colors.GREEN_600,
+            duration=3000
+        )
+        
+        self.page.snack_bar = snack_bar
+        snack_bar.open = True
+        self.page.update()
+        
+        print("SnackBar mostrado")
+        
+        # También intentar cambiar el título temporalmente
+        titulo_original = self.titulo.value
+        self.titulo.value = "¡BOTÓN FUNCIONA!"
+        self.titulo.color = colors.GREEN
+        self.page.update()
+        
+        # Restaurar título después de 2 segundos
+        def restaurar_titulo():
+            time.sleep(2)
+            self.titulo.value = titulo_original
+            self.titulo.color = colors.BLACK
+            self.page.update()
+        
+        threading.Thread(target=restaurar_titulo, daemon=True).start()
+
     def colocar_ficha_especial(self, e=None):
         self.turno_jugador = False
         self.game_timer.stop()
@@ -1305,8 +1453,19 @@ class JuegoPrincipiante:
                                es_computadora=True)
         )
         
+        # Guardar datos para el diálogo
+        datos_ficha = {
+            "numero1": ficha_elegida.numero1,
+            "numero2": ficha_elegida.numero2,
+            "repr1": ficha_elegida.repr1,
+            "repr2": ficha_elegida.repr2,
+            "es_doble": es_doble,
+            "es_computadora": True,
+            "es_central": False
+        }
+        
         if lado_a_jugar == "arriba":
-            self.fichas_visuales_arriba.insert(0, ficha_visual) # Guardar para diálogo
+            self.datos_fichas_arriba.insert(0, datos_ficha)  # Guardar datos para diálogo
             indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
                             if isinstance(control, ft.DragTarget)]
             if indices_zonas:
@@ -1314,10 +1473,9 @@ class JuegoPrincipiante:
                 self.area_juego.controls[indice_actual] = ficha_visual
                 nueva_zona = self.crear_zona_destino("arriba")
                 self.area_juego.controls.insert(0, nueva_zona)
-                # Mantener centradas las fichas después de agregar una nueva
                 self.area_juego.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         else:
-            self.fichas_visuales_abajo.append(ficha_visual) # Guardar para diálogo
+            self.datos_fichas_abajo.append(datos_ficha)  # Guardar datos para diálogo
             indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
                             if isinstance(control, ft.DragTarget)]
             if indices_zonas:
@@ -1325,7 +1483,6 @@ class JuegoPrincipiante:
                 self.area_juego.controls[indice_actual] = ficha_visual
                 nueva_zona = self.crear_zona_destino("abajo")
                 self.area_juego.controls.append(nueva_zona)
-                # Mantener centradas las fichas después de agregar una nueva
                 self.area_juego.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         
         if len(self.fichas_app) == 0:
@@ -1421,7 +1578,15 @@ class JuegoPrincipiante:
                 )
                 
                 if posicion == "arriba":
-                    self.fichas_visuales_arriba.insert(0, ficha_visual) # Guardar para diálogo
+                    self.datos_fichas_arriba.insert(0, {  # Guardar datos para diálogo
+                        "numero1": ficha.numero1,
+                        "numero2": ficha.numero2,
+                        "repr1": ficha.repr1,
+                        "repr2": ficha.repr2,
+                        "es_doble": es_doble,
+                        "es_computadora": False,
+                        "es_central": False
+                    })
                     indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
                                    if isinstance(control, ft.DragTarget)]
                     if indices_zonas:
@@ -1429,10 +1594,17 @@ class JuegoPrincipiante:
                         self.area_juego.controls[indice_actual] = ficha_visual
                         nueva_zona = self.crear_zona_destino("arriba")
                         self.area_juego.controls.insert(0, nueva_zona)
-                        # Mantener centradas las fichas después de agregar una nueva
                         self.area_juego.horizontal_alignment = ft.CrossAxisAlignment.CENTER
                 else:
-                    self.fichas_visuales_abajo.append(ficha_visual) # Guardar para diálogo
+                    self.datos_fichas_abajo.append({  # Guardar datos para diálogo
+                        "numero1": ficha.numero1,
+                        "numero2": ficha.numero2,
+                        "repr1": ficha.repr1,
+                        "repr2": ficha.repr2,
+                        "es_doble": es_doble,
+                        "es_computadora": False,
+                        "es_central": False
+                    })
                     indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
                                    if isinstance(control, ft.DragTarget)]
                     if indices_zonas:
@@ -1440,7 +1612,6 @@ class JuegoPrincipiante:
                         self.area_juego.controls[indice_actual] = ficha_visual
                         nueva_zona = self.crear_zona_destino("abajo")
                         self.area_juego.controls.append(nueva_zona)
-                        # Mantener centradas las fichas después de agregar una nueva
                         self.area_juego.horizontal_alignment = ft.CrossAxisAlignment.CENTER
 
                 self.turno_jugador = False
