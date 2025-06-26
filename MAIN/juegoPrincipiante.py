@@ -1059,24 +1059,30 @@ class JuegoPrincipiante:
         }
         
         if lado == "arriba":
-            self.datos_fichas_arriba.insert(0, datos_ficha)  # Guardar datos para diálogo
+            self.datos_fichas_arriba.insert(0, datos_ficha)  # Insertar al principio (arriba de la última)
+            # Encontrar la zona de arriba (primera zona de destino)
             indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
                              if isinstance(control, ft.DragTarget)]
             if indices_zonas:
-                indice_actual = indices_zonas[0]
-                self.area_juego.controls[indice_actual] = ficha_visual
+                indice_zona_arriba = indices_zonas[0]
+                # Reemplazar la zona de arriba con la nueva ficha
+                self.area_juego.controls[indice_zona_arriba] = ficha_visual
+                # Crear nueva zona de arriba más externa
                 nueva_zona = self.crear_zona_destino("arriba")
-                self.area_juego.controls.insert(0, nueva_zona)
+                self.area_juego.controls.insert(indice_zona_arriba, nueva_zona)
                 self.area_juego.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         else:
             self.datos_fichas_abajo.append(datos_ficha)  # Guardar datos para diálogo
+            # Encontrar la zona de abajo (última zona de destino)
             indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
                              if isinstance(control, ft.DragTarget)]
             if indices_zonas:
-                indice_actual = indices_zonas[-1]
-                self.area_juego.controls[indice_actual] = ficha_visual
+                indice_zona_abajo = indices_zonas[-1]
+                # Reemplazar la zona de abajo con la nueva ficha
+                self.area_juego.controls[indice_zona_abajo] = ficha_visual
+                # Crear nueva zona de abajo más externa
                 nueva_zona = self.crear_zona_destino("abajo")
-                self.area_juego.controls.append(nueva_zona)
+                self.area_juego.controls.insert(indice_zona_abajo + 1, nueva_zona)
                 self.area_juego.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         
         self.actualizar_vista_extremos()
@@ -1181,8 +1187,8 @@ class JuegoPrincipiante:
             # Crear controles igual que antes
             controles_tablero = []
             
-            # Añadir fichas de arriba
-            for datos_ficha in reversed(self.datos_fichas_arriba):
+            # Añadir fichas de arriba (ya están en el orden correcto)
+            for datos_ficha in self.datos_fichas_arriba:
                 if datos_ficha["es_doble"]:
                     ficha_control = crear_ficha_visual_horizontal(
                         datos_ficha["numero1"], datos_ficha["numero2"],
@@ -1242,6 +1248,43 @@ class JuegoPrincipiante:
                     text_align=ft.TextAlign.CENTER
                 ))
 
+            # Calcular el número total de fichas para determinar el tamaño del overlay
+            total_fichas = len(self.datos_fichas_arriba) + 1 + len(self.datos_fichas_abajo)  # +1 para la ficha central
+            
+            # Obtener dimensiones de la ventana para calcular el tamaño máximo del overlay
+            ventana_height = self.page.window_height or 800
+            ventana_width = self.page.window_width or 1200
+            
+            # Reservar espacio para márgenes y UI
+            max_overlay_height = int(ventana_height * 0.85)  # 85% de la altura de la ventana
+            max_overlay_width = int(ventana_width * 0.6)     # 60% del ancho de la ventana
+            
+            # Altura base por ficha (con espacio)
+            altura_por_ficha = 105
+            espaciado_total = (total_fichas - 1) * 5  # Espaciado entre fichas
+            altura_contenido_necesaria = total_fichas * altura_por_ficha + espaciado_total
+            
+            # Calcular escala necesaria para que todo quepa
+            escala_fichas = 1.0
+            if altura_contenido_necesaria > (max_overlay_height - 100):  # -100 para la barra de título y padding
+                escala_fichas = (max_overlay_height - 100) / altura_contenido_necesaria
+                escala_fichas = max(0.4, escala_fichas)  # Mínimo 40% de escala
+            
+            # Calcular dimensiones finales del overlay
+            altura_final = min(max_overlay_height, int(altura_contenido_necesaria * escala_fichas) + 100)
+            ancho_final = min(max_overlay_width, max(320, int(total_fichas * 60 * escala_fichas)))
+            
+            # Aplicar escala a todos los controles del tablero
+            controles_escalados = []
+            for control in controles_tablero:
+                control_escalado = ft.Container(
+                    content=control,
+                    scale=escala_fichas,
+                    alignment=ft.alignment.center
+                )
+                controles_escalados.append(control_escalado)
+            controles_tablero = controles_escalados
+
             # Crear overlay en lugar de diálogo
             overlay_content = ft.Container(
                 content=ft.Column(
@@ -1250,34 +1293,53 @@ class JuegoPrincipiante:
                             content=ft.Row(
                                 [
                                     ft.Text("Tablero Completo", size=20, weight=ft.FontWeight.BOLD, color=colors.WHITE),
-                                    ft.IconButton(
-                                        icon=ft.icons.CLOSE,
-                                        icon_color=colors.WHITE,
-                                        on_click=lambda _: self.cerrar_overlay()
+                                    ft.Row(
+                                        [
+                                            ft.ElevatedButton(
+                                                text="Cerrar",
+                                                on_click=lambda _: self.cerrar_overlay(),
+                                                style=ft.ButtonStyle(
+                                                    color=colors.WHITE,
+                                                    bgcolor=colors.RED_600
+                                                ),
+                                                width=80,
+                                                height=35
+                                            ),
+                                            ft.IconButton(
+                                                icon=ft.icons.CLOSE,
+                                                icon_color=colors.WHITE,
+                                                on_click=lambda _: self.cerrar_overlay(),
+                                                tooltip="Cerrar"
+                                            )
+                                        ],
+                                        spacing=5
                                     )
                                 ],
                                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN
                             ),
-                            bgcolor=colors.BLUE_600,
+                            bgcolor="#2A5A4A",  # Un tono más claro del verde del juego para la barra de título
                             padding=10,
                             border_radius=ft.border_radius.only(top_left=10, top_right=10)
                         ),
                         ft.Container(
                             content=ft.Column(
                                 controls=controles_tablero,
-                                scroll=ft.ScrollMode.AUTO,
-                                spacing=5,
+                                scroll=None,  # Sin scroll
+                                spacing=int(5 * escala_fichas),  # Espaciado escalado
                                 horizontal_alignment=ft.CrossAxisAlignment.CENTER
                             ),
-                            width=280,
-                            height=400,
-                            bgcolor=colors.WHITE,
-                            padding=10
+                            width=ancho_final,
+                            height=altura_final - 60,  # Restar altura de la barra de título
+                            bgcolor="#1B4D3E",  # Mismo color de fondo que el juego principal
+                            padding=10,
+                            border_radius=ft.border_radius.only(bottom_left=10, bottom_right=10)
                         )
                     ],
                     spacing=0
                 ),
-                bgcolor=colors.WHITE,
+                width=ancho_final,
+                height=altura_final,
+                bgcolor="#1B4D3E",  # Mismo color de fondo que el juego principal
                 border_radius=10,
                 shadow=ft.BoxShadow(
                     spread_radius=1,
@@ -1293,7 +1355,7 @@ class JuegoPrincipiante:
                 content=ft.Stack(
                     [
                         ft.Container(
-                            bgcolor=colors.BLACK54,
+                            bgcolor="#1B4D3E99",  # Mismo color del juego pero con transparencia
                             expand=True,
                             on_click=lambda _: self.cerrar_overlay()
                         ),
@@ -1483,24 +1545,30 @@ class JuegoPrincipiante:
         }
         
         if lado_a_jugar == "arriba":
-            self.datos_fichas_arriba.insert(0, datos_ficha)  # Guardar datos para diálogo
+            self.datos_fichas_arriba.insert(0, datos_ficha)  # Insertar al principio (arriba de la última)
+            # Encontrar la zona de arriba (primera zona de destino)
             indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
                             if isinstance(control, ft.DragTarget)]
             if indices_zonas:
-                indice_actual = indices_zonas[0]
-                self.area_juego.controls[indice_actual] = ficha_visual
+                indice_zona_arriba = indices_zonas[0]
+                # Reemplazar la zona de arriba con la nueva ficha
+                self.area_juego.controls[indice_zona_arriba] = ficha_visual
+                # Crear nueva zona de arriba más externa
                 nueva_zona = self.crear_zona_destino("arriba")
-                self.area_juego.controls.insert(0, nueva_zona)
+                self.area_juego.controls.insert(indice_zona_arriba, nueva_zona)
                 self.area_juego.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         else:
             self.datos_fichas_abajo.append(datos_ficha)  # Guardar datos para diálogo
+            # Encontrar la zona de abajo (última zona de destino)
             indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
                             if isinstance(control, ft.DragTarget)]
             if indices_zonas:
-                indice_actual = indices_zonas[-1]
-                self.area_juego.controls[indice_actual] = ficha_visual
+                indice_zona_abajo = indices_zonas[-1]
+                # Reemplazar la zona de abajo con la nueva ficha
+                self.area_juego.controls[indice_zona_abajo] = ficha_visual
+                # Crear nueva zona de abajo más externa
                 nueva_zona = self.crear_zona_destino("abajo")
-                self.area_juego.controls.append(nueva_zona)
+                self.area_juego.controls.insert(indice_zona_abajo + 1, nueva_zona)
                 self.area_juego.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         
         if len(self.fichas_app) == 0:
@@ -1596,7 +1664,7 @@ class JuegoPrincipiante:
                 )
                 
                 if posicion == "arriba":
-                    self.datos_fichas_arriba.insert(0, {  # Guardar datos para diálogo
+                    self.datos_fichas_arriba.insert(0, {  # Insertar al principio (arriba de la última)
                         "numero1": ficha.numero1,
                         "numero2": ficha.numero2,
                         "repr1": ficha.repr1,
@@ -1605,13 +1673,16 @@ class JuegoPrincipiante:
                         "es_computadora": False,
                         "es_central": False
                     })
+                    # Encontrar la zona de arriba (primera zona de destino)
                     indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
                                    if isinstance(control, ft.DragTarget)]
                     if indices_zonas:
-                        indice_actual = indices_zonas[0]
-                        self.area_juego.controls[indice_actual] = ficha_visual
+                        indice_zona_arriba = indices_zonas[0]
+                        # Reemplazar la zona de arriba con la nueva ficha
+                        self.area_juego.controls[indice_zona_arriba] = ficha_visual
+                        # Crear nueva zona de arriba más externa
                         nueva_zona = self.crear_zona_destino("arriba")
-                        self.area_juego.controls.insert(0, nueva_zona)
+                        self.area_juego.controls.insert(indice_zona_arriba, nueva_zona)
                         self.area_juego.horizontal_alignment = ft.CrossAxisAlignment.CENTER
                 else:
                     self.datos_fichas_abajo.append({  # Guardar datos para diálogo
@@ -1623,13 +1694,16 @@ class JuegoPrincipiante:
                         "es_computadora": False,
                         "es_central": False
                     })
+                    # Encontrar la zona de abajo (última zona de destino)
                     indices_zonas = [i for i, control in enumerate(self.area_juego.controls) 
                                    if isinstance(control, ft.DragTarget)]
                     if indices_zonas:
-                        indice_actual = indices_zonas[-1]
-                        self.area_juego.controls[indice_actual] = ficha_visual
+                        indice_zona_abajo = indices_zonas[-1]
+                        # Reemplazar la zona de abajo con la nueva ficha
+                        self.area_juego.controls[indice_zona_abajo] = ficha_visual
+                        # Crear nueva zona de abajo más externa
                         nueva_zona = self.crear_zona_destino("abajo")
-                        self.area_juego.controls.append(nueva_zona)
+                        self.area_juego.controls.insert(indice_zona_abajo + 1, nueva_zona)
                         self.area_juego.horizontal_alignment = ft.CrossAxisAlignment.CENTER
 
                 self.turno_jugador = False
