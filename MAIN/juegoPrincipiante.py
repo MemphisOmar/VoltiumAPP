@@ -580,6 +580,7 @@ def encontrar_ficha_inicial(fichas_jugador, fichas_app):
 
 class JuegoPrincipiante:
     def __init__(self, page, main_menu):
+        self.estado_partida = "DESERTO"  # Estado inicial de la partida
         self.page = page
         self.main_menu = main_menu
         self.timer_active = True
@@ -886,8 +887,11 @@ class JuegoPrincipiante:
         if self.user_id:
             self.sesion_manager = SesionManager(self.user_id)
             self.sesion_manager.incrementar_partidas()  # Incrementa partidas al iniciar el juego
+            # Obtener el número de partida actual para este usuario
+            self.numero_partida = self.sesion_manager.obtener_datos()["partidas"]
         else:
             self.sesion_manager = None
+            self.numero_partida = 1
         self.tiempo_partida = 0  # Para almacenar el tiempo jugado en la partida
 
     def cleanup(self):
@@ -913,8 +917,16 @@ class JuegoPrincipiante:
         if self.game_timer:
             self.game_timer.stop()
             segundos_jugados = int(self.game_timer.get_current_time())
+            # Guardar el tiempo en la base de datos de sesiones
             if self.sesion_manager and segundos_jugados > 0:
                 self.sesion_manager.incrementar_tiempo(segundos_jugados)
+            # Guardar la partida individual
+            h = segundos_jugados // 3600
+            m = (segundos_jugados % 3600) // 60
+            s = segundos_jugados % 60
+            tiempo_str = f"{h:02d}:{m:02d}:{s:02d}"
+            if self.sesion_manager:
+                self.sesion_manager.registrar_partida_individual(self.numero_partida, tiempo_str, self.estado_partida)
         if self.main_menu:
             self.main_menu(self.page)
         
@@ -1092,6 +1104,12 @@ class JuegoPrincipiante:
             self.tiempo_partida = 0
         if self.sesion_manager and self.tiempo_partida > 0:
             self.sesion_manager.incrementar_tiempo(self.tiempo_partida)
+
+    def marcar_ganador(self):
+        self.estado_partida = "GANO"
+
+    def marcar_perdedor(self):
+        self.estado_partida = "PERDIO"
 
     def agregar_ficha_del_pozo(self, ficha):
         if ficha in self.pozo:

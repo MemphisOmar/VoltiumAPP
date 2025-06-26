@@ -32,6 +32,17 @@ class DBManager:
                 FOREIGN KEY(user_id) REFERENCES users(user_id)
             )
         ''')
+        # Crear tabla de partidas individuales
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS partida (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                numero_partida INTEGER NOT NULL,
+                tiempo TEXT DEFAULT "0:00:00",
+                estado TEXT,
+                FOREIGN KEY(user_id) REFERENCES users(user_id)
+            )
+        ''')
 
         conn.commit()
         conn.close()

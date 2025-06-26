@@ -58,3 +58,13 @@ class SesionManager:
             'tiempo': datos[1] if datos else "0:00:00",
             'partidas': datos[2] if datos else 0
         }
+
+    def registrar_partida_individual(self, numero_partida, tiempo, estado):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO partida (user_id, numero_partida, tiempo, estado)
+            VALUES (?, ?, ?, ?)
+        ''', (self.user_id, numero_partida, tiempo, estado))
+        conn.commit()
+        conn.close()
