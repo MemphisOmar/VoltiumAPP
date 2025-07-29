@@ -1185,11 +1185,23 @@ class JuegoPrincipiante:
         
         try:
             # Crear controles igual que antes
-            controles_tablero = []
+            controles_tablero_verticales = []  # Para las primeras 8 fichas
+            controles_tablero_horizontales = []  # Para las fichas adicionales
+            contador_fichas = 0  # Contador para rastrear cuántas fichas hemos procesado
             
             # Añadir fichas de arriba (ya están en el orden correcto)
             for datos_ficha in self.datos_fichas_arriba:
-                if datos_ficha["es_doble"]:
+                contador_fichas += 1
+                
+                # Determinar orientación basada en el contador
+                if contador_fichas <= 8:
+                    # Primeras 8 fichas mantienen orientación original
+                    usar_horizontal = datos_ficha["es_doble"]
+                else:
+                    # A partir de la novena, invertir orientación
+                    usar_horizontal = not datos_ficha["es_doble"]
+                
+                if usar_horizontal:
                     ficha_control = crear_ficha_visual_horizontal(
                         datos_ficha["numero1"], datos_ficha["numero2"],
                         repr1=datos_ficha["repr1"], repr2=datos_ficha["repr2"],
@@ -1203,10 +1215,23 @@ class JuegoPrincipiante:
                         es_computadora=datos_ficha["es_computadora"],
                         es_central=datos_ficha["es_central"]
                     )
-                controles_tablero.append(ficha_control)
+                
+                # Decidir dónde colocar la ficha basado en el contador
+                if contador_fichas <= 8:
+                    controles_tablero_verticales.append(ficha_control)
+                else:
+                    controles_tablero_horizontales.append(ficha_control)
             
             # Añadir ficha central
-            if self.datos_ficha_central["es_doble"]:
+            contador_fichas += 1
+            
+            # Determinar orientación para ficha central
+            if contador_fichas <= 8:
+                usar_horizontal_central = self.datos_ficha_central["es_doble"]
+            else:
+                usar_horizontal_central = not self.datos_ficha_central["es_doble"]
+            
+            if usar_horizontal_central:
                 ficha_central_control = crear_ficha_visual_horizontal(
                     self.datos_ficha_central["numero1"], self.datos_ficha_central["numero2"],
                     repr1=self.datos_ficha_central["repr1"], repr2=self.datos_ficha_central["repr2"],
@@ -1220,11 +1245,24 @@ class JuegoPrincipiante:
                     es_computadora=self.datos_ficha_central["es_computadora"],
                     es_central=self.datos_ficha_central["es_central"]
                 )
-            controles_tablero.append(ficha_central_control)
+            
+            # Decidir dónde colocar la ficha central
+            if contador_fichas <= 8:
+                controles_tablero_verticales.append(ficha_central_control)
+            else:
+                controles_tablero_horizontales.append(ficha_central_control)
             
             # Añadir fichas de abajo
             for datos_ficha in self.datos_fichas_abajo:
-                if datos_ficha["es_doble"]:
+                contador_fichas += 1
+                
+                # Determinar orientación basada en el contador
+                if contador_fichas <= 8:
+                    usar_horizontal = datos_ficha["es_doble"]
+                else:
+                    usar_horizontal = not datos_ficha["es_doble"]
+                
+                if usar_horizontal:
                     ficha_control = crear_ficha_visual_horizontal(
                         datos_ficha["numero1"], datos_ficha["numero2"],
                         repr1=datos_ficha["repr1"], repr2=datos_ficha["repr2"],
@@ -1238,11 +1276,41 @@ class JuegoPrincipiante:
                         es_computadora=datos_ficha["es_computadora"],
                         es_central=datos_ficha["es_central"]
                     )
-                controles_tablero.append(ficha_control)
+                
+                # Decidir dónde colocar la ficha basado en el contador
+                if contador_fichas <= 8:
+                    controles_tablero_verticales.append(ficha_control)
+                else:
+                    controles_tablero_horizontales.append(ficha_control)
 
-            if len(controles_tablero) == 1:
-                controles_tablero.insert(0, ft.Text(
-                    "Solo está la ficha central",
+            # Crear el layout final combinando vertical y horizontal
+            controles_finales = []
+            
+            # Si tenemos fichas verticales, las agregamos
+            if controles_tablero_verticales:
+                if len(controles_tablero_verticales) == 1 and len(self.datos_fichas_arriba) == 0 and len(self.datos_fichas_abajo) == 0:
+                    controles_finales.append(ft.Text(
+                        "Solo está la ficha central",
+                        size=14,
+                        color=colors.GREY_600,
+                        text_align=ft.TextAlign.CENTER
+                    ))
+                controles_finales.extend(controles_tablero_verticales)
+            
+            # Si tenemos fichas horizontales, las agregamos en una fila
+            if controles_tablero_horizontales:
+                fila_horizontal = ft.Row(
+                    controls=controles_tablero_horizontales,
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    spacing=5,
+                    scroll=ft.ScrollMode.AUTO,  # Permitir scroll horizontal si hay muchas fichas
+                )
+                controles_finales.append(fila_horizontal)
+
+            # Si no hay fichas en absoluto
+            if not controles_finales:
+                controles_finales.append(ft.Text(
+                    "No hay fichas en el tablero",
                     size=14,
                     color=colors.GREY_600,
                     text_align=ft.TextAlign.CENTER
@@ -1257,33 +1325,40 @@ class JuegoPrincipiante:
             
             # Reservar espacio para márgenes y UI
             max_overlay_height = int(ventana_height * 0.85)  # 85% de la altura de la ventana
-            max_overlay_width = int(ventana_width * 0.6)     # 60% del ancho de la ventana
+            max_overlay_width = int(ventana_width * 0.8)     # Aumentado a 80% del ancho para las fichas horizontales
             
-            # Altura base por ficha (con espacio)
-            altura_por_ficha = 105
-            espaciado_total = (total_fichas - 1) * 5  # Espaciado entre fichas
-            altura_contenido_necesaria = total_fichas * altura_por_ficha + espaciado_total
+            # Calcular dimensiones basadas en si hay fichas horizontales
+            if controles_tablero_horizontales:
+                # Si hay fichas horizontales, necesitamos más ancho
+                altura_base = len(controles_tablero_verticales) * 105 + 150  # +150 para la fila horizontal
+                ancho_base = max(400, len(controles_tablero_horizontales) * 90)  # 90px por ficha horizontal
+            else:
+                # Solo fichas verticales
+                altura_base = total_fichas * 105
+                ancho_base = 400
             
             # Calcular escala necesaria para que todo quepa
             escala_fichas = 1.0
-            if altura_contenido_necesaria > (max_overlay_height - 100):  # -100 para la barra de título y padding
-                escala_fichas = (max_overlay_height - 100) / altura_contenido_necesaria
-                escala_fichas = max(0.4, escala_fichas)  # Mínimo 40% de escala
+            if altura_base > (max_overlay_height - 100):  # -100 para la barra de título y padding
+                escala_fichas = min(escala_fichas, (max_overlay_height - 100) / altura_base)
+            if ancho_base > (max_overlay_width - 50):  # -50 para padding
+                escala_fichas = min(escala_fichas, (max_overlay_width - 50) / ancho_base)
+            
+            escala_fichas = max(0.3, escala_fichas)  # Mínimo 30% de escala
             
             # Calcular dimensiones finales del overlay
-            altura_final = min(max_overlay_height, int(altura_contenido_necesaria * escala_fichas) + 100)
-            ancho_final = min(max_overlay_width, max(320, int(total_fichas * 60 * escala_fichas)))
+            altura_final = min(max_overlay_height, int(altura_base * escala_fichas) + 100)
+            ancho_final = min(max_overlay_width, max(320, int(ancho_base * escala_fichas) + 50))
             
             # Aplicar escala a todos los controles del tablero
             controles_escalados = []
-            for control in controles_tablero:
+            for control in controles_finales:
                 control_escalado = ft.Container(
                     content=control,
                     scale=escala_fichas,
                     alignment=ft.alignment.center
                 )
                 controles_escalados.append(control_escalado)
-            controles_tablero = controles_escalados
 
             # Crear overlay en lugar de diálogo
             overlay_content = ft.Container(
@@ -1323,7 +1398,7 @@ class JuegoPrincipiante:
                         ),
                         ft.Container(
                             content=ft.Column(
-                                controls=controles_tablero,
+                                controls=controles_escalados,
                                 scroll=None,  # Sin scroll
                                 spacing=int(5 * escala_fichas),  # Espaciado escalado
                                 horizontal_alignment=ft.CrossAxisAlignment.CENTER
@@ -1679,6 +1754,7 @@ class JuegoPrincipiante:
                     if indices_zonas:
                         indice_zona_arriba = indices_zonas[0]
                         # Reemplazar la zona de arriba con la nueva ficha
+
                         self.area_juego.controls[indice_zona_arriba] = ficha_visual
                         # Crear nueva zona de arriba más externa
                         nueva_zona = self.crear_zona_destino("arriba")
