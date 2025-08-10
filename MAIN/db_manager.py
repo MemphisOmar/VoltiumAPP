@@ -90,8 +90,42 @@ class DBManager:
         }
         result = self.insert("sesion", data)
         if isinstance(result, dict) and result.get('message'):
-            print("Error Supabase sesion:", result['message'])
+            if "duplicate key value" not in result['message']:
+                print("Error Supabase sesion:", result['message'])
         return result
+
+    def actualizar_sesion(self, user_id, sesiones, tiempo, partidas):
+        # Buscar la sesión actual
+        filtro = {"user_id": f"eq.{user_id}"}
+        sesiones_actuales = self.select("sesion", filtro)
+        if sesiones_actuales and isinstance(sesiones_actuales, list) and len(sesiones_actuales) > 0:
+            sesion = sesiones_actuales[0]
+            # Sumar los valores
+            nuevas_sesiones = sesion.get("sesiones", 0) + sesiones
+            nuevas_partidas = sesion.get("partidas", 0) + partidas
+            # Sumar tiempo en formato hh:mm:ss
+            def sumar_tiempos(t1, t2):
+                h1, m1, s1 = [int(x) for x in t1.split(":")]
+                h2, m2, s2 = [int(x) for x in t2.split(":")]
+                total = h1*3600 + m1*60 + s1 + h2*3600 + m2*60 + s2
+                h, rem = divmod(total, 3600)
+                m, s = divmod(rem, 60)
+                return f"{h:02d}:{m:02d}:{s:02d}"
+            nuevo_tiempo = sumar_tiempos(sesion.get("tiempo", "00:00:00"), tiempo)
+            # Actualizar la fila
+            update_filtro = {"user_id": f"eq.{user_id}"}
+            data = {
+                "sesiones": nuevas_sesiones,
+                "tiempo": nuevo_tiempo,
+                "partidas": nuevas_partidas
+            }
+            result = self.update("sesion", update_filtro, data)
+            if isinstance(result, dict) and result.get('message'):
+                print("Error Supabase sesion update:", result['message'])
+            return result
+        else:
+            print(f"No existe sesion para user_id {user_id}, no se crea nueva fila.")
+            return None
 
 # Ejemplo de uso:
 # db = DBManager()

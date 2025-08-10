@@ -72,3 +72,12 @@ def mostrar_formulario_perfil(page, on_perfil_guardado):
         )
     )
     page.update()
+
+def registrar_sesion_si_no_existe(user_id, sesiones=1, tiempo="00:00:00", partidas=0):
+    from db_manager import DBManager
+    db = DBManager()
+    filtro = {"user_id": f"eq.{user_id}"}
+    sesiones_actuales = db.select("sesion", filtro)
+    if not (sesiones_actuales and isinstance(sesiones_actuales, list) and len(sesiones_actuales) > 0):
+        db.registrar_sesion(user_id, sesiones, tiempo, partidas)
+    # Si ya existe, no hacer nada

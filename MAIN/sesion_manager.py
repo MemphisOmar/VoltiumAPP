@@ -24,28 +24,42 @@ class SesionManager:
         conn.close()
 
     def incrementar_sesion(self):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        cursor.execute('UPDATE sesion SET sesiones = sesiones + 1 WHERE user_id = ?', (self.user_id,))
-        conn.commit()
-        conn.close()
+        from db_manager import DBManager
+        db = DBManager()
+        # Obtener datos actuales de la sesión
+        filtro = {"user_id": f"eq.{self.user_id}"}
+        sesiones_actuales = db.select("sesion", filtro)
+        if sesiones_actuales and isinstance(sesiones_actuales, list) and len(sesiones_actuales) > 0:
+            # Actualizar la fila existente
+            db.actualizar_sesion(self.user_id, 1, "00:00:00", 0)
+        else:
+            # Crear nueva fila solo si no existe
+            db.registrar_sesion(self.user_id, 1, "00:00:00", 0)
 
     def incrementar_tiempo(self, segundos):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        cursor.execute('SELECT tiempo FROM sesion WHERE user_id = ?', (self.user_id,))
-        t1 = cursor.fetchone()[0]
-        nuevo_tiempo = sumar_tiempos(t1, segundos)
-        cursor.execute('UPDATE sesion SET tiempo = ? WHERE user_id = ?', (nuevo_tiempo, self.user_id))
-        conn.commit()
-        conn.close()
+        from db_manager import DBManager
+        db = DBManager()
+        # Obtener datos actuales de la sesión
+        filtro = {"user_id": f"eq.{self.user_id}"}
+        sesiones_actuales = db.select("sesion", filtro)
+        h = segundos // 3600
+        m = (segundos % 3600) // 60
+        s = segundos % 60
+        tiempo_str = f"{h:02d}:{m:02d}:{s:02d}"
+        if sesiones_actuales and isinstance(sesiones_actuales, list) and len(sesiones_actuales) > 0:
+            db.actualizar_sesion(self.user_id, 0, tiempo_str, 0)
+        else:
+            db.registrar_sesion(self.user_id, 0, tiempo_str, 0)
 
     def incrementar_partidas(self):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        cursor.execute('UPDATE sesion SET partidas = partidas + 1 WHERE user_id = ?', (self.user_id,))
-        conn.commit()
-        conn.close()
+        from db_manager import DBManager
+        db = DBManager()
+        filtro = {"user_id": f"eq.{self.user_id}"}
+        sesiones_actuales = db.select("sesion", filtro)
+        if sesiones_actuales and isinstance(sesiones_actuales, list) and len(sesiones_actuales) > 0:
+            db.actualizar_sesion(self.user_id, 0, "00:00:00", 1)
+        else:
+            db.registrar_sesion(self.user_id, 0, "00:00:00", 1)
 
     def obtener_datos(self):
         conn = sqlite3.connect(self.db_path)
