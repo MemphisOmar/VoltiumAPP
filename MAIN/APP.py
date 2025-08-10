@@ -6,7 +6,6 @@ import json
 # Asegurar que el directorio actual está en el path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from juego import configurar_ventana_juego  #Importar la subrutina desde juego.py
 from login import mostrar_formulario_perfil
 from ayuda import mostrar_ayuda
 
@@ -36,7 +35,8 @@ def main(page: ft.Page):
         def jugar_click(e):
             if page.app_running:
                 page.clean()
-                configurar_ventana_juego(page, main)
+                from juegoPrincipiante import configurar_ventana_domino
+                configurar_ventana_domino(page, main)
                 page.update()
 
         def ayuda_click(e):

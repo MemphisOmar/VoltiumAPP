@@ -2,23 +2,22 @@ import flet as ft
 import webbrowser
 
 def mostrar_ayuda(page: ft.Page):
-    def regresar_menu(e):
-        dlg.open = False
-        page.update()
-        from MAIN.APP import main
-        main(page)
+    def cerrar_ayuda(e=None):
+        if overlay_ayuda in page.overlay:
+            page.overlay.remove(overlay_ayuda)
+            page.update()
 
     def mostrar_codigo_colores(e):
         contenido_ayuda.content = ft.Column([
             ft.Image(src="MAIN/Resistencia.png", width=400, height=400, fit=ft.ImageFit.CONTAIN),
-            ft.ElevatedButton("Regresar", on_click=lambda e: mostrar_menu_ayuda(e))
+            ft.ElevatedButton("Regresar", on_click=mostrar_menu_ayuda)
         ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
         page.update()
 
     def abrir_explicacion(e):
         webbrowser.open("https://www.youtube.com/shorts/nbPFl_Icn78")
         
-    def mostrar_menu_ayuda(e):
+    def mostrar_menu_ayuda(e=None):
         contenido_ayuda.content = ft.Column([
             ft.Text("¿Qué tipo de ayuda necesita?", size=20, weight=ft.FontWeight.BOLD),
             ft.ElevatedButton(
@@ -38,8 +37,8 @@ def mostrar_ayuda(page: ft.Page):
                 bgcolor="#29c589"
             ),
             ft.ElevatedButton(
-                "Regresar al Menú",
-                on_click=regresar_menu,
+                "Cerrar Ayuda",
+                on_click=cerrar_ayuda,
                 width=200,
                 height=50,
                 color="white",
@@ -56,12 +55,21 @@ def mostrar_ayuda(page: ft.Page):
         border_radius=10
     )
 
-    dlg = ft.AlertDialog(
-        content=contenido_ayuda,
-        modal=True
+    overlay_ayuda = ft.Container(
+        content=ft.Column([
+            ft.Container(
+                content=contenido_ayuda,
+                alignment=ft.alignment.center,
+                bgcolor="#88B98A",
+                border_radius=10,
+                padding=10,
+            )
+        ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+        bgcolor="#88B98A99",  # Semitransparente
+        alignment=ft.alignment.center,
+        expand=True
     )
 
-    page.dialog = dlg
-    dlg.open = True
-    mostrar_menu_ayuda(None)
+    page.overlay.append(overlay_ayuda)
+    mostrar_menu_ayuda()
     page.update()
