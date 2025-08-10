@@ -917,16 +917,32 @@ class JuegoPrincipiante:
         if self.game_timer:
             self.game_timer.stop()
             segundos_jugados = int(self.game_timer.get_current_time())
-            # Guardar el tiempo en la base de datos de sesiones
-            if self.sesion_manager and segundos_jugados > 0:
-                self.sesion_manager.incrementar_tiempo(segundos_jugados)
-            # Guardar la partida individual
             h = segundos_jugados // 3600
             m = (segundos_jugados % 3600) // 60
             s = segundos_jugados % 60
             tiempo_str = f"{h:02d}:{m:02d}:{s:02d}"
+            if self.sesion_manager and segundos_jugados > 0:
+                self.sesion_manager.incrementar_tiempo(segundos_jugados)
             if self.sesion_manager:
                 self.sesion_manager.registrar_partida_individual(self.numero_partida, tiempo_str, self.estado_partida)
+            # REGISTRO EN SUPABASE
+            db = DBManager()
+            # Registrar partida en Supabase
+            db.registrar_partida(
+                user_id=self.user_id,
+                numero_partida=self.numero_partida,
+                tiempo=tiempo_str,
+                estado=self.estado_partida
+            )
+            # Registrar sesión en Supabase
+            if self.sesion_manager:
+                datos_sesion = self.sesion_manager.obtener_datos()
+                db.registrar_sesion(
+                    user_id=self.user_id,
+                    sesiones=datos_sesion.get("sesiones", 1),
+                    tiempo=tiempo_str,
+                    partidas=datos_sesion.get("partidas", 1)
+                )
         if self.main_menu:
             self.main_menu(self.page)
         
@@ -1742,7 +1758,7 @@ class JuegoPrincipiante:
                     self.datos_fichas_arriba.insert(0, {  # Insertar al principio (arriba de la última)
                         "numero1": ficha.numero1,
                         "numero2": ficha.numero2,
-                        "repr1": ficha.repr1,
+                                               "repr1": ficha.repr1,
                         "repr2": ficha.repr2,
                         "es_doble": es_doble,
                         "es_computadora": False,
