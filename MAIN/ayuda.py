@@ -52,7 +52,7 @@ def mostrar_ayuda(page: ft.Page):
         padding=30,
         width=380,
         height=420,
-        bgcolor="#88B98ACC",  # Verde con menos transparencia
+        bgcolor="#29c589",  # Verde sólido igual al menú principal
         border_radius=30,
         alignment=ft.alignment.center
     )
