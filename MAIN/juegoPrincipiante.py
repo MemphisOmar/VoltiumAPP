@@ -1317,7 +1317,7 @@ class JuegoPrincipiante:
             if controles_tablero_horizontales:
                 fila_horizontal = ft.Row(
                     controls=controles_tablero_horizontales,
-                    alignment=ft.MainAxisAlignment.CENTER,
+                    alignment=ft.MainAxisAlignment.START,  # Cambiar de CENTER a START para alinear a la izquierda
                     spacing=5,
                     scroll=ft.ScrollMode.AUTO,  # Permitir scroll horizontal si hay muchas fichas
                 )
@@ -1372,7 +1372,7 @@ class JuegoPrincipiante:
                 control_escalado = ft.Container(
                     content=control,
                     scale=escala_fichas,
-                    alignment=ft.alignment.center
+                    alignment=ft.alignment.center_left  # Cambiar de center a center_left
                 )
                 controles_escalados.append(control_escalado)
 
@@ -1417,7 +1417,7 @@ class JuegoPrincipiante:
                                 controls=controles_escalados,
                                 scroll=None,  # Sin scroll
                                 spacing=int(5 * escala_fichas),  # Espaciado escalado
-                                horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                                horizontal_alignment=ft.CrossAxisAlignment.START  # Cambiar de CENTER a START
                             ),
                             width=ancho_final,
                             height=altura_final - 60,  # Restar altura de la barra de título
