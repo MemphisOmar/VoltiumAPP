@@ -1210,11 +1210,11 @@ class JuegoPrincipiante:
                 contador_fichas += 1
                 
                 # Determinar orientación basada en el contador
-                if contador_fichas <= 4:
-                    # Primeras 4 fichas mantienen orientación original
+                if contador_fichas <= 8:  # Cambiado para que las primeras 8 fichas vayan verticalmente
+                    # Primeras 8 fichas mantienen orientación original
                     usar_horizontal = datos_ficha["es_doble"]
                 else:
-                    # A partir de la quinta, invertir orientación
+                    # A partir de la novena, invertir orientación
                     usar_horizontal = not datos_ficha["es_doble"]
                 
                 if usar_horizontal:
@@ -1233,7 +1233,7 @@ class JuegoPrincipiante:
                     )
                 
                 # Decidir dónde colocar la ficha basado en el contador
-                if contador_fichas <= 4:
+                if contador_fichas <= 8:  # Cambiado para que las primeras 8 fichas vayan verticalmente
                     controles_tablero_verticales.append(ficha_control)
                 else:
                     controles_tablero_horizontales.append(ficha_control)
@@ -1242,7 +1242,7 @@ class JuegoPrincipiante:
             contador_fichas += 1
             
             # Determinar orientación para ficha central
-            if contador_fichas <= 4:
+            if contador_fichas <= 8:  # Mantener consistente con el límite de 8
                 usar_horizontal_central = self.datos_ficha_central["es_doble"]
             else:
                 usar_horizontal_central = not self.datos_ficha_central["es_doble"]
@@ -1263,7 +1263,7 @@ class JuegoPrincipiante:
                 )
             
             # Decidir dónde colocar la ficha central
-            if contador_fichas <= 4:
+            if contador_fichas <= 8:  # Mantener consistente con el límite de 8
                 controles_tablero_verticales.append(ficha_central_control)
             else:
                 controles_tablero_horizontales.append(ficha_central_control)
@@ -1273,7 +1273,7 @@ class JuegoPrincipiante:
                 contador_fichas += 1
                 
                 # Determinar orientación basada en el contador
-                if contador_fichas <= 4:
+                if contador_fichas <= 8:  # Mantener consistente con el límite de 8
                     usar_horizontal = datos_ficha["es_doble"]
                 else:
                     usar_horizontal = not datos_ficha["es_doble"]
@@ -1294,7 +1294,7 @@ class JuegoPrincipiante:
                     )
                 
                 # Decidir dónde colocar la ficha basado en el contador
-                if contador_fichas <= 4:
+                if contador_fichas <= 8:  # Mantener consistente con el límite de 8
                     controles_tablero_verticales.append(ficha_control)
                 else:
                     controles_tablero_horizontales.append(ficha_control)
