@@ -1196,132 +1196,145 @@ class JuegoPrincipiante:
         e.page.update()
     
     def mostrar_juego_completo_dialogo(self, e):
-        """Crea y muestra un overlay con todas las fichas jugadas como alternativa al diálogo"""
+        """Crea y muestra un overlay con todas las fichas jugadas"""
         print("=== DEBUG: Usando overlay en lugar de diálogo ===")
         
         try:
-            # Crear controles igual que antes
-            controles_tablero_verticales = []  # Para las primeras 8 fichas
-            controles_tablero_horizontales = []  # Para las fichas adicionales
-            contador_fichas = 0  # Contador para rastrear cuántas fichas hemos procesado
+            # Crear tres grupos de controles
+            controles_tablero_verticales = []  # Para las fichas 1-5
+            controles_tablero_horizontales = [] # Para las fichas 6-11
+            controles_tablero_verticales_final = [] # Para las fichas 12+
+            contador_fichas = 0
             
-            # Añadir fichas de arriba (ya están en el orden correcto)
+            # Procesar fichas de arriba
             for datos_ficha in self.datos_fichas_arriba:
                 contador_fichas += 1
-                
-                # Determinar orientación basada en el contador
-                if contador_fichas <= 8:  # Cambiado para que las primeras 8 fichas vayan verticalmente
-                    # Primeras 8 fichas mantienen orientación original
+                if contador_fichas <= 5:
+                    # Fichas 1-5: verticales con excepción de dobles
                     usar_horizontal = datos_ficha["es_doble"]
-                else:
-                    # A partir de la novena, invertir orientación
-                    usar_horizontal = not datos_ficha["es_doble"]
-                
-                if usar_horizontal:
+                    ficha_control = (
+                        crear_ficha_visual_horizontal(datos_ficha["numero1"], datos_ficha["numero2"],
+                            repr1=datos_ficha["repr1"], repr2=datos_ficha["repr2"],
+                            es_computadora=datos_ficha["es_computadora"], es_central=datos_ficha["es_central"]
+                        ) if usar_horizontal else
+                        crear_ficha_visual(datos_ficha["numero1"], datos_ficha["numero2"],
+                            repr1=datos_ficha["repr1"], repr2=datos_ficha["repr2"],
+                            es_computadora=datos_ficha["es_computadora"], es_central=datos_ficha["es_central"]
+                        )
+                    )
+                    controles_tablero_verticales.append(ficha_control)
+                elif contador_fichas <= 11:
+                    # Fichas 6-11: siempre horizontales
                     ficha_control = crear_ficha_visual_horizontal(
                         datos_ficha["numero1"], datos_ficha["numero2"],
                         repr1=datos_ficha["repr1"], repr2=datos_ficha["repr2"],
                         es_computadora=datos_ficha["es_computadora"],
                         es_central=datos_ficha["es_central"]
                     )
-                else:
-                    ficha_control = crear_ficha_visual(
-                        datos_ficha["numero1"], datos_ficha["numero2"],
-                        repr1=datos_ficha["repr1"], repr2=datos_ficha["repr2"],
-                        es_computadora=datos_ficha["es_computadora"],
-                        es_central=datos_ficha["es_central"]
-                    )
-                
-                # Decidir dónde colocar la ficha basado en el contador
-                if contador_fichas <= 8:  # Cambiado para que las primeras 8 fichas vayan verticalmente
-                    controles_tablero_verticales.append(ficha_control)
-                else:
                     controles_tablero_horizontales.append(ficha_control)
-            
-            # Añadir ficha central
+                else:
+                    # Fichas 12+: verticales con excepción de dobles
+                    usar_horizontal = datos_ficha["es_doble"]
+                    ficha_control = (
+                        crear_ficha_visual_horizontal(datos_ficha["numero1"], datos_ficha["numero2"],
+                            repr1=datos_ficha["repr1"], repr2=datos_ficha["repr2"],
+                            es_computadora=datos_ficha["es_computadora"], es_central=datos_ficha["es_central"]
+                        ) if usar_horizontal else
+                        crear_ficha_visual(datos_ficha["numero1"], datos_ficha["numero2"],
+                            repr1=datos_ficha["repr1"], repr2=datos_ficha["repr2"],
+                            es_computadora=datos_ficha["es_computadora"], es_central=datos_ficha["es_central"]
+                        )
+                    )
+                    controles_tablero_verticales_final.append(ficha_control)
+
+            # Procesar ficha central usando la misma lógica
             contador_fichas += 1
-            
-            # Determinar orientación para ficha central
-            if contador_fichas <= 8:  # Mantener consistente con el límite de 8
-                usar_horizontal_central = self.datos_ficha_central["es_doble"]
-            else:
-                usar_horizontal_central = not self.datos_ficha_central["es_doble"]
-            
-            if usar_horizontal_central:
-                ficha_central_control = crear_ficha_visual_horizontal(
-                    self.datos_ficha_central["numero1"], self.datos_ficha_central["numero2"],
-                    repr1=self.datos_ficha_central["repr1"], repr2=self.datos_ficha_central["repr2"],
-                    es_computadora=self.datos_ficha_central["es_computadora"],
-                    es_central=self.datos_ficha_central["es_central"]
+            if contador_fichas <= 5:
+                controles_tablero_verticales.append(
+                    crear_ficha_visual(
+                        self.datos_ficha_central["numero1"], self.datos_ficha_central["numero2"],
+                        repr1=self.datos_ficha_central["repr1"], repr2=self.datos_ficha_central["repr2"],
+                        es_computadora=self.datos_ficha_central["es_computadora"],
+                        es_central=self.datos_ficha_central["es_central"]
+                    )
+                )
+            elif contador_fichas <= 11:
+                controles_tablero_horizontales.append(
+                    crear_ficha_visual_horizontal(
+                        self.datos_ficha_central["numero1"], self.datos_ficha_central["numero2"],
+                        repr1=self.datos_ficha_central["repr1"], repr2=self.datos_ficha_central["repr2"],
+                        es_computadora=self.datos_ficha_central["es_computadora"],
+                        es_central=self.datos_ficha_central["es_central"]
+                    )
                 )
             else:
-                ficha_central_control = crear_ficha_visual(
-                    self.datos_ficha_central["numero1"], self.datos_ficha_central["numero2"],
-                    repr1=self.datos_ficha_central["repr1"], repr2=self.datos_ficha_central["repr2"],
-                    es_computadora=self.datos_ficha_central["es_computadora"],
-                    es_central=self.datos_ficha_central["es_central"]
+                controles_tablero_verticales_final.append(
+                    crear_ficha_visual(
+                        self.datos_ficha_central["numero1"], self.datos_ficha_central["numero2"],
+                        repr1=self.datos_ficha_central["repr1"], repr2=self.datos_ficha_central["repr2"],
+                        es_computadora=self.datos_ficha_central["es_computadora"],
+                        es_central=self.datos_ficha_central["es_central"]
+                    )
                 )
-            
-            # Decidir dónde colocar la ficha central
-            if contador_fichas <= 8:  # Mantener consistente con el límite de 8
-                controles_tablero_verticales.append(ficha_central_control)
-            else:
-                controles_tablero_horizontales.append(ficha_central_control)
-            
-            # Añadir fichas de abajo
+
+            # Procesar fichas de abajo usando la misma lógica
             for datos_ficha in self.datos_fichas_abajo:
                 contador_fichas += 1
-                
-                # Determinar orientación basada en el contador
-                if contador_fichas <= 8:  # Mantener consistente con el límite de 8
+                if contador_fichas <= 5:
                     usar_horizontal = datos_ficha["es_doble"]
-                else:
-                    usar_horizontal = not datos_ficha["es_doble"]
-                
-                if usar_horizontal:
+                    ficha_control = (
+                        crear_ficha_visual_horizontal(datos_ficha["numero1"], datos_ficha["numero2"],
+                            repr1=datos_ficha["repr1"], repr2=datos_ficha["repr2"],
+                            es_computadora=datos_ficha["es_computadora"], es_central=datos_ficha["es_central"]
+                        ) if usar_horizontal else
+                        crear_ficha_visual(datos_ficha["numero1"], datos_ficha["numero2"],
+                            repr1=datos_ficha["repr1"], repr2=datos_ficha["repr2"],
+                            es_computadora=datos_ficha["es_computadora"], es_central=datos_ficha["es_central"]
+                        )
+                    )
+                    controles_tablero_verticales.append(ficha_control)
+                elif contador_fichas <= 11:
                     ficha_control = crear_ficha_visual_horizontal(
                         datos_ficha["numero1"], datos_ficha["numero2"],
                         repr1=datos_ficha["repr1"], repr2=datos_ficha["repr2"],
                         es_computadora=datos_ficha["es_computadora"],
                         es_central=datos_ficha["es_central"]
                     )
-                else:
-                    ficha_control = crear_ficha_visual(
-                        datos_ficha["numero1"], datos_ficha["numero2"],
-                        repr1=datos_ficha["repr1"], repr2=datos_ficha["repr2"],
-                        es_computadora=datos_ficha["es_computadora"],
-                        es_central=datos_ficha["es_central"]
-                    )
-                
-                # Decidir dónde colocar la ficha basado en el contador
-                if contador_fichas <= 8:  # Mantener consistente con el límite de 8
-                    controles_tablero_verticales.append(ficha_control)
-                else:
                     controles_tablero_horizontales.append(ficha_control)
+                else:
+                    usar_horizontal = datos_ficha["es_doble"]
+                    ficha_control = (
+                        crear_ficha_visual_horizontal(datos_ficha["numero1"], datos_ficha["numero2"],
+                            repr1=datos_ficha["repr1"], repr2=datos_ficha["repr2"],
+                            es_computadora=datos_ficha["es_computadora"], es_central=datos_ficha["es_central"]
+                        ) if usar_horizontal else
+                        crear_ficha_visual(datos_ficha["numero1"], datos_ficha["numero2"],
+                            repr1=datos_ficha["repr1"], repr2=datos_ficha["repr2"],
+                            es_computadora=datos_ficha["es_computadora"], es_central=datos_ficha["es_central"]
+                        )
+                    )
+                    controles_tablero_verticales_final.append(ficha_control)
 
-            # Crear el layout final combinando vertical y horizontal
+            # Crear el layout combinando las tres secciones
             controles_finales = []
             
-            # Si tenemos fichas verticales, las agregamos
+            # Agregar primera sección vertical (1-5)
             if controles_tablero_verticales:
-                if len(controles_tablero_verticales) == 1 and len(self.datos_fichas_arriba) == 0 and len(self.datos_fichas_abajo) == 0:
-                    controles_finales.append(ft.Text(
-                        "Solo está la ficha central",
-                        size=14,
-                        color=colors.GREY_600,
-                        text_align=ft.TextAlign.CENTER
-                    ))
                 controles_finales.extend(controles_tablero_verticales)
             
-            # Si tenemos fichas horizontales, las agregamos en una fila
+            # Agregar sección horizontal (6-11)
             if controles_tablero_horizontales:
                 fila_horizontal = ft.Row(
                     controls=controles_tablero_horizontales,
-                    alignment=ft.MainAxisAlignment.START,  # Cambiar de CENTER a START para alinear a la izquierda
+                    alignment=ft.MainAxisAlignment.START,
                     spacing=5,
-                    scroll=ft.ScrollMode.AUTO,  # Permitir scroll horizontal si hay muchas fichas
+                    scroll=ft.ScrollMode.AUTO
                 )
                 controles_finales.append(fila_horizontal)
+            
+            # Agregar segunda sección vertical (12+)
+            if controles_tablero_verticales_final:
+                controles_finales.extend(controles_tablero_verticales_final)
 
             # Si no hay fichas en absoluto
             if not controles_finales:
